@@ -51,8 +51,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) =
     label = 'Pending';
     variant = 'outline';
   } else {
-    // Safe fallback for unknown statuses
-    label = status.toString().replace(/-/g, ' ');
+    // Safe fallback for unknown statuses - convert to string explicitly
+    label = String(status).replace(/-/g, ' ');
     variant = 'outline';
   }
   
