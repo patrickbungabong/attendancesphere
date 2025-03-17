@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -29,15 +30,101 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { format, parseISO } from 'date-fns';
-import { Search, Plus, Filter, Upload, MoreVertical, Eye } from 'lucide-react';
+import { Search, Plus, Filter, Upload, MoreVertical, Eye, Calendar } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { PaymentMethod } from '@/types';
+import { PaymentMethod, Session } from '@/types';
+
+// New component for viewing session details
+const SessionDetailsDialog = ({ 
+  open, 
+  onOpenChange, 
+  sessionId 
+}: { 
+  open: boolean, 
+  onOpenChange: (open: boolean) => void, 
+  sessionId: string | null 
+}) => {
+  const session = sessions.find(s => s.id === sessionId);
+  
+  if (!session) {
+    return null;
+  }
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Session Details</DialogTitle>
+          <DialogDescription>
+            Information about the session this payment is for
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Date</p>
+              <p className="text-base">{format(parseISO(session.date), 'MMMM dd, yyyy')}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Time</p>
+              <p className="text-base">{session.startTime} - {session.endTime}</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Student</p>
+              <p className="text-base">{session.studentName}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Teacher</p>
+              <p className="text-base">{session.teacherName}</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Session Status</p>
+              <div className="mt-1">
+                <StatusBadge status={session.status} />
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Payment Status</p>
+              <div className="mt-1">
+                <StatusBadge status={session.paymentStatus} />
+              </div>
+            </div>
+          </div>
+          
+          {session.notes && (
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Notes</p>
+              <p className="text-base">{session.notes}</p>
+            </div>
+          )}
+        </div>
+        
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 const PaymentsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [methodFilter, setMethodFilter] = useState<PaymentMethod | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<typeof payments[0] | null>(null);
   const [showRecordPaymentModal, setShowRecordPaymentModal] = useState(false);
+  
+  // New state for session details dialog
+  const [showSessionDetails, setShowSessionDetails] = useState(false);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   
   // Filter payments based on search and method
   const filteredPayments = payments.filter(payment => {
@@ -60,6 +147,12 @@ const PaymentsPage: React.FC = () => {
   
   const getSessionDetails = (sessionId: string) => {
     return sessions.find(s => s.id === sessionId);
+  };
+  
+  // Handler for viewing session details
+  const handleViewSession = (sessionId: string) => {
+    setSelectedSessionId(sessionId);
+    setShowSessionDetails(true);
   };
 
   return (
@@ -123,6 +216,7 @@ const PaymentsPage: React.FC = () => {
                   <TableHead>Teacher</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Method</TableHead>
+                  <TableHead>Session</TableHead>
                   <TableHead>Proof</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -130,7 +224,7 @@ const PaymentsPage: React.FC = () => {
               <TableBody>
                 {filteredPayments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={8} className="h-24 text-center">
                       No payments found.
                     </TableCell>
                   </TableRow>
@@ -156,6 +250,23 @@ const PaymentsPage: React.FC = () => {
                         
                         <TableCell>
                           <span className="capitalize">{payment.method.replace('-', ' ')}</span>
+                        </TableCell>
+                        
+                        {/* New Session Button Column */}
+                        <TableCell>
+                          {session ? (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="flex items-center text-primary text-xs h-6"
+                              onClick={() => handleViewSession(session.id)}
+                            >
+                              <Calendar className="h-3 w-3 mr-1" />
+                              View Session
+                            </Button>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">Not Available</span>
+                          )}
                         </TableCell>
                         
                         <TableCell>
@@ -185,6 +296,12 @@ const PaymentsPage: React.FC = () => {
                               <DropdownMenuItem>View Details</DropdownMenuItem>
                               <DropdownMenuItem>Edit Payment</DropdownMenuItem>
                               <DropdownMenuItem>Upload Proof</DropdownMenuItem>
+                              {session && (
+                                <DropdownMenuItem onClick={() => handleViewSession(session.id)}>
+                                  <Calendar className="h-4 w-4 mr-2" />
+                                  View Session
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -232,6 +349,13 @@ const PaymentsPage: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Session Details Dialog */}
+      <SessionDetailsDialog
+        open={showSessionDetails}
+        onOpenChange={setShowSessionDetails}
+        sessionId={selectedSessionId}
+      />
       
       {/* Record Payment Modal */}
       <RecordPaymentModal

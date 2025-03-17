@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { sessions, getSessionsByTeacher, students, users } from '@/lib/mock-data';
-import { Session, SessionStatus } from '@/types';
+import { sessions, getSessionsByTeacher, students, users, payments } from '@/lib/mock-data';
+import { Session, SessionStatus, Payment } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,9 +50,94 @@ import {
   DollarSign, 
   FileEdit, 
   Trash, 
-  RotateCcw
+  RotateCcw,
+  CreditCard
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+
+// New component for viewing session payments
+const SessionPaymentsDialog = ({ 
+  open, 
+  onOpenChange, 
+  sessionId 
+}: { 
+  open: boolean, 
+  onOpenChange: (open: boolean) => void, 
+  sessionId: string | null 
+}) => {
+  const sessionPayments = payments.filter(payment => payment.sessionId === sessionId);
+  const session = sessions.find(s => s.id === sessionId);
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>Session Payments</DialogTitle>
+          <DialogDescription>
+            {session ? (
+              <span>Payments for session with {session.studentName} on {format(parseISO(session.date), 'MMMM dd, yyyy')}</span>
+            ) : (
+              <span>Session payments</span>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="rounded-md border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Method</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sessionPayments.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center">
+                    No payments found for this session.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                sessionPayments.map((payment) => (
+                  <TableRow key={payment.id}>
+                    <TableCell>
+                      {format(parseISO(payment.date), 'MMM dd, yyyy')}
+                    </TableCell>
+                    <TableCell>₱{payment.amount.toLocaleString()}</TableCell>
+                    <TableCell>
+                      <span className="capitalize">{payment.method.replace('-', ' ')}</span>
+                    </TableCell>
+                    <TableCell>
+                      {payment.confirmedByTeacher ? (
+                        <span className="text-xs flex items-center text-success">
+                          <Check className="h-3 w-3 mr-1" />
+                          Confirmed by Teacher
+                        </span>
+                      ) : (
+                        <span className="text-xs flex items-center text-muted-foreground">
+                          <X className="h-3 w-3 mr-1" />
+                          Not Confirmed
+                        </span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 const SessionsPage: React.FC = () => {
   const { user } = useAuth();
@@ -68,7 +153,10 @@ const SessionsPage: React.FC = () => {
   
   const [showCreateSessionModal, setShowCreateSessionModal] = useState(false);
   
-  // Get sessions based on role
+  // New state for session payments dialog
+  const [showSessionPayments, setShowSessionPayments] = useState(false);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  
   const allSessions = user?.role === 'teacher' 
     ? getSessionsByTeacher(user.id)
     : sessions;
@@ -107,6 +195,17 @@ const SessionsPage: React.FC = () => {
     return matchesSearch && matchesStatus && matchesPaymentStatus && 
            matchesTeacher && matchesStudent && matchesDateRange;
   });
+  
+  // Utility function to check if a session has payments
+  const hasPayments = (sessionId: string) => {
+    return payments.some(payment => payment.sessionId === sessionId);
+  };
+  
+  // Handler for viewing session payments
+  const handleViewSessionPayments = (sessionId: string) => {
+    setSelectedSessionId(sessionId);
+    setShowSessionPayments(true);
+  };
   
   const handleMarkAttendance = (session: Session) => {
     toast({
@@ -400,6 +499,18 @@ const SessionsPage: React.FC = () => {
                               Confirmed by Teacher
                             </span>
                           )}
+                          {/* New: View payment button if there are payments for this session */}
+                          {hasPayments(session.id) && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="flex items-center mt-1 h-6 text-primary text-xs"
+                              onClick={() => handleViewSessionPayments(session.id)}
+                            >
+                              <CreditCard className="h-3 w-3 mr-1" />
+                              View Payment
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                       
@@ -543,6 +654,13 @@ const SessionsPage: React.FC = () => {
                                 </DropdownMenuItem>
                               )}
                               
+                              {hasPayments(session.id) && (
+                                <DropdownMenuItem onClick={() => handleViewSessionPayments(session.id)}>
+                                  <CreditCard className="h-4 w-4 mr-2" />
+                                  View Payments
+                                </DropdownMenuItem>
+                              )}
+                              
                               {user?.role === 'admin' && (
                                 <>
                                   <DropdownMenuSeparator />
@@ -569,6 +687,13 @@ const SessionsPage: React.FC = () => {
       <CreateSessionModal
         open={showCreateSessionModal}
         onOpenChange={setShowCreateSessionModal}
+      />
+      
+      {/* Session Payments Dialog */}
+      <SessionPaymentsDialog
+        open={showSessionPayments}
+        onOpenChange={setShowSessionPayments}
+        sessionId={selectedSessionId}
       />
     </div>
   );
