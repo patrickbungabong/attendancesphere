@@ -1,5 +1,5 @@
 
-import { User, Student, Session, Payment, UserRole } from '@/types';
+import { User, Student, Session, Payment, UserRole, SessionStatus } from '@/types';
 import { format, subDays, addDays } from 'date-fns';
 
 // Generate a random ID for our mock data
@@ -51,7 +51,16 @@ export const students: Student[] = [
 const today = new Date();
 const generateMockSessions = (): Session[] => {
   const sessions: Session[] = [];
-  const statuses: Session['status'][] = ['scheduled', 'completed', 'cancelled', 'no-show'];
+  const statuses: SessionStatus[] = [
+    'scheduled', 
+    'completed', 
+    'cancelled-by-teacher', 
+    'cancelled-by-student', 
+    'cancelled-by-admin', 
+    'no-show', 
+    'rescheduled',
+    'pending-makeup'
+  ];
   const paymentStatuses: Session['paymentStatus'][] = ['pending', 'paid', 'partially-paid'];
   
   // Past sessions (last 7 days)
@@ -61,7 +70,11 @@ const generateMockSessions = (): Session[] => {
     const teacherName = teacherId === 'teacher1' ? 'Sara Johnson' : 'David Chen';
     const studentId = `student${Math.floor(Math.random() * 6) + 1}`;
     const studentName = students.find(s => s.id === studentId)?.name || 'Unknown Student';
-    const status = statuses[Math.floor(Math.random() * (statuses.length - 1) + 1)]; // No scheduled in past
+    
+    // For past sessions, don't use 'scheduled' status
+    const statusIndex = Math.floor(Math.random() * (statuses.length - 1)) + 1;
+    const status = statuses[statusIndex];
+    const isCompleted = status === 'completed';
     
     sessions.push({
       id: generateId(),
@@ -73,11 +86,14 @@ const generateMockSessions = (): Session[] => {
       studentId,
       studentName,
       status,
-      attendanceConfirmed: status === 'completed',
+      attendanceConfirmed: isCompleted,
+      teacherAttendanceConfirmed: isCompleted && Math.random() > 0.3,
       paymentStatus: paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)],
+      paymentConfirmedByTeacher: isCompleted && Math.random() > 0.5,
       notes: Math.random() > 0.7 ? 'Some notes about the session' : undefined,
-      cancelledBy: status === 'cancelled' ? (Math.random() > 0.5 ? 'teacher' : 'student') : undefined,
-      cancelReason: status === 'cancelled' ? 'Schedule conflict' : undefined
+      cancelledBy: status.includes('cancelled') ? status.split('-by-')[1] as 'teacher' | 'student' | 'admin' : undefined,
+      cancelReason: status.includes('cancelled') ? 'Schedule conflict' : undefined,
+      rescheduleDate: status === 'rescheduled' ? format(addDays(today, Math.floor(Math.random() * 7) + 1), 'yyyy-MM-dd') : undefined
     });
   }
   
@@ -89,6 +105,7 @@ const generateMockSessions = (): Session[] => {
     const studentId = `student${Math.floor(Math.random() * 6) + 1}`;
     const studentName = students.find(s => s.id === studentId)?.name || 'Unknown Student';
     const status = Math.random() > 0.5 ? 'scheduled' : 'completed';
+    const isCompleted = status === 'completed';
     
     sessions.push({
       id: generateId(),
@@ -100,8 +117,10 @@ const generateMockSessions = (): Session[] => {
       studentId,
       studentName,
       status,
-      attendanceConfirmed: status === 'completed' && Math.random() > 0.3,
+      attendanceConfirmed: isCompleted && Math.random() > 0.3,
+      teacherAttendanceConfirmed: isCompleted && Math.random() > 0.3,
       paymentStatus: Math.random() > 0.5 ? 'paid' : 'pending',
+      paymentConfirmedByTeacher: isCompleted && Math.random() > 0.5,
       notes: Math.random() > 0.7 ? 'Some notes about the session' : undefined
     });
   }
@@ -114,6 +133,10 @@ const generateMockSessions = (): Session[] => {
     const studentId = `student${Math.floor(Math.random() * 6) + 1}`;
     const studentName = students.find(s => s.id === studentId)?.name || 'Unknown Student';
     
+    // For future sessions, use 'scheduled', 'rescheduled', or 'pending-makeup'
+    const futureStatuses: SessionStatus[] = ['scheduled', 'rescheduled', 'pending-makeup'];
+    const status = futureStatuses[Math.floor(Math.random() * futureStatuses.length)];
+    
     sessions.push({
       id: generateId(),
       date,
@@ -123,10 +146,12 @@ const generateMockSessions = (): Session[] => {
       teacherName,
       studentId,
       studentName,
-      status: 'scheduled',
+      status,
       attendanceConfirmed: false,
+      teacherAttendanceConfirmed: false,
       paymentStatus: 'pending',
-      notes: Math.random() > 0.7 ? 'Some notes about the session' : undefined
+      notes: Math.random() > 0.7 ? 'Some notes about the session' : undefined,
+      rescheduleDate: status === 'rescheduled' ? format(addDays(today, Math.floor(Math.random() * 7) + 7), 'yyyy-MM-dd') : undefined
     });
   }
   
@@ -156,7 +181,8 @@ export const generateMockPayments = (): Payment[] => {
       proofImageUrl: Math.random() > 0.5 ? 'https://placehold.co/400x300/png' : undefined,
       notes: Math.random() > 0.7 ? 'Payment received on time' : undefined,
       adminFee,
-      teacherFee
+      teacherFee,
+      confirmedByTeacher: Math.random() > 0.5
     });
     
     // Add partial payment for some sessions
@@ -174,7 +200,8 @@ export const generateMockPayments = (): Payment[] => {
         proofImageUrl: Math.random() > 0.5 ? 'https://placehold.co/400x300/png' : undefined,
         notes: 'Partial payment',
         adminFee: partialAdminFee,
-        teacherFee: partialTeacherFee
+        teacherFee: partialTeacherFee,
+        confirmedByTeacher: Math.random() > 0.5
       });
     }
   });
@@ -223,7 +250,7 @@ export const getTeacherStats = (teacherId: string) => {
   return {
     totalSessions: teacherSessions.length,
     completedSessions: teacherSessions.filter(s => s.status === 'completed').length,
-    cancelledSessions: teacherSessions.filter(s => s.status === 'cancelled').length,
+    cancelledSessions: teacherSessions.filter(s => s.status.includes('cancelled')).length,
     todaySessions: todaySessions.length,
     upcomingSessions: teacherSessions.filter(s => 
       new Date(s.date) > new Date() && s.status === 'scheduled'

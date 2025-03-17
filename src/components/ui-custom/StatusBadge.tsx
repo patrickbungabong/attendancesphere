@@ -16,10 +16,18 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) =
         return { label: 'Scheduled', variant: 'outline' as const };
       case 'completed':
         return { label: 'Completed', variant: 'success' as const };
-      case 'cancelled':
-        return { label: 'Cancelled', variant: 'destructive' as const };
+      case 'cancelled-by-teacher':
+        return { label: 'Cancelled by Teacher', variant: 'destructive' as const };
+      case 'cancelled-by-student':
+        return { label: 'Cancelled by Student', variant: 'destructive' as const };
+      case 'cancelled-by-admin':
+        return { label: 'Cancelled by Admin', variant: 'destructive' as const };
       case 'no-show':
         return { label: 'No Show', variant: 'destructive' as const };
+      case 'rescheduled':
+        return { label: 'Rescheduled', variant: 'warning' as const };
+      case 'pending-makeup':
+        return { label: 'Pending Makeup', variant: 'warning' as const };
       case 'paid':
         return { label: 'Paid', variant: 'success' as const };
       case 'partially-paid':

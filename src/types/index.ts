@@ -16,7 +16,15 @@ export interface Student {
   phone?: string;
 }
 
-export type SessionStatus = 'scheduled' | 'completed' | 'cancelled' | 'no-show';
+export type SessionStatus = 
+  | 'scheduled' 
+  | 'completed' 
+  | 'cancelled-by-teacher' 
+  | 'cancelled-by-student' 
+  | 'cancelled-by-admin' 
+  | 'no-show' 
+  | 'rescheduled'
+  | 'pending-makeup';
 
 export interface Session {
   id: string;
@@ -29,10 +37,14 @@ export interface Session {
   studentName: string;
   status: SessionStatus;
   attendanceConfirmed: boolean;
+  teacherAttendanceConfirmed?: boolean;
   paymentStatus: 'pending' | 'paid' | 'partially-paid';
+  paymentConfirmedByTeacher?: boolean;
   notes?: string;
   cancelledBy?: 'teacher' | 'student' | 'admin';
   cancelReason?: string;
+  rescheduleDate?: string;
+  makeupSessionId?: string;
 }
 
 export type PaymentMethod = 'cash' | 'bank-transfer' | 'gcash';
@@ -47,6 +59,7 @@ export interface Payment {
   notes?: string;
   adminFee: number;
   teacherFee: number;
+  confirmedByTeacher?: boolean;
 }
 
 export interface DashboardStats {
