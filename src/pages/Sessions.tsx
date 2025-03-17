@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { sessions, getSessionsByTeacher, students, users } from '@/lib/mock-data';
@@ -7,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { StatusBadge } from '@/components/ui-custom/StatusBadge';
+import { CreateSessionModal } from '@/components/modals/CreateSessionModal';
 import {
   Table,
   TableBody,
@@ -65,6 +65,8 @@ const SessionsPage: React.FC = () => {
   const [endDateFilter, setEndDateFilter] = useState<Date | undefined>(undefined);
   const [cancelReason, setCancelReason] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  
+  const [showCreateSessionModal, setShowCreateSessionModal] = useState(false);
   
   // Get sessions based on role
   const allSessions = user?.role === 'teacher' 
@@ -153,10 +155,7 @@ const SessionsPage: React.FC = () => {
   };
   
   const handleCreateSession = () => {
-    toast({
-      title: 'Create Session',
-      description: 'This feature would open a modal to create a new session.',
-    });
+    setShowCreateSessionModal(true);
   };
 
   const handleRescheduleSession = (session: Session) => {
@@ -565,6 +564,12 @@ const SessionsPage: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Create Session Modal */}
+      <CreateSessionModal
+        open={showCreateSessionModal}
+        onOpenChange={setShowCreateSessionModal}
+      />
     </div>
   );
 };

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { StatusBadge } from '@/components/ui-custom/StatusBadge';
+import { RecordPaymentModal } from '@/components/modals/RecordPaymentModal';
 import {
   Table,
   TableBody,
@@ -36,6 +37,7 @@ const PaymentsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [methodFilter, setMethodFilter] = useState<PaymentMethod | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<typeof payments[0] | null>(null);
+  const [showRecordPaymentModal, setShowRecordPaymentModal] = useState(false);
   
   // Filter payments based on search and method
   const filteredPayments = payments.filter(payment => {
@@ -53,10 +55,7 @@ const PaymentsPage: React.FC = () => {
   });
   
   const handleCreatePayment = () => {
-    toast({
-      title: 'Create Payment',
-      description: 'This feature would open a modal to create a new payment.',
-    });
+    setShowRecordPaymentModal(true);
   };
   
   const getSessionDetails = (sessionId: string) => {
@@ -233,6 +232,12 @@ const PaymentsPage: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Record Payment Modal */}
+      <RecordPaymentModal
+        open={showRecordPaymentModal}
+        onOpenChange={setShowRecordPaymentModal}
+      />
     </div>
   );
 };
