@@ -1,8 +1,9 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '@/types';
-import { getUserByEmail, users } from '@/lib/mock-data';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
+import { getUserByEmail } from '@/lib/api/users';
 
 interface AuthContextType {
   user: User | null;
@@ -19,43 +20,91 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if we have a user in session storage
-    const storedUser = sessionStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    // Check if we have an active Supabase session
+    const checkSession = async () => {
+      setIsLoading(true);
+      
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // We have a session, get the user profile
+        const email = session.user.email;
+        if (email) {
+          const { data: userData, error } = await getUserByEmail(email);
+          if (userData && !error) {
+            setUser(userData);
+          } else {
+            // Session exists but user not in database
+            console.error("User authenticated but not found in database:", error);
+            await supabase.auth.signOut();
+          }
+        }
+      }
+      
+      setIsLoading(false);
+    };
+    
+    checkSession();
+    
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          const email = session.user.email;
+          if (email) {
+            const { data: userData, error } = await getUserByEmail(email);
+            if (userData && !error) {
+              setUser(userData);
+            }
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // In a real app, this would be an API call
-      // For now, we'll just simulate a login with our mock data
-      // Password is ignored for demo
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Fake delay
+      // Authenticate with Supabase
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       
-      const foundUser = getUserByEmail(email);
+      if (authError) throw authError;
       
-      if (foundUser) {
-        setUser(foundUser);
-        sessionStorage.setItem('user', JSON.stringify(foundUser));
+      // Get user profile from database
+      const { data: userData, error: userError } = await getUserByEmail(email);
+      
+      if (userError) throw userError;
+      
+      if (userData) {
+        setUser(userData);
         toast({
           title: 'Login Successful',
-          description: `Welcome back, ${foundUser.name}!`,
+          description: `Welcome back, ${userData.name}!`,
         });
       } else {
         toast({
           variant: 'destructive',
           title: 'Login Failed',
-          description: 'Invalid email or password',
+          description: 'User not found in the system',
         });
+        // Sign out since we couldn't find the user in our database
+        await supabase.auth.signOut();
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: 'An error occurred during login',
+        description: error.message || 'An error occurred during login',
       });
       console.error('Login error', error);
     } finally {
@@ -63,9 +112,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    sessionStorage.removeItem('user');
     toast({
       title: 'Logged Out',
       description: 'You have been successfully logged out',

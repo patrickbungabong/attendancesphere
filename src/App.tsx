@@ -1,50 +1,113 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import MainLayout from "@/components/layout/MainLayout";
-import Login from "@/pages/Login";
-import Dashboard from "@/pages/Dashboard";
-import Sessions from "@/pages/Sessions";
-import Schedule from "@/pages/Schedule";
-import Earnings from "@/pages/Earnings";
-import Payments from "@/pages/Payments";
-import Students from "@/pages/Students";
-import Teachers from "@/pages/Teachers";
-import NotFound from "@/pages/NotFound";
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from '@/components/theme-provider';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { QueryProvider } from '@/contexts/QueryProvider';
+import { Toaster } from '@/components/ui/toaster';
+import { LoadingScreen } from '@/components/ui-custom/LoadingScreen';
 
-const queryClient = new QueryClient();
+import MainLayout from '@/components/layout/MainLayout';
+import IndexPage from '@/pages/Index';
+import LoginPage from '@/pages/Login';
+import NotFoundPage from '@/pages/NotFound';
+import DashboardPage from '@/pages/Dashboard';
+import StudentsPage from '@/pages/Students';
+import TeachersPage from '@/pages/Teachers';
+import SessionsPage from '@/pages/Sessions';
+import SchedulePage from '@/pages/Schedule';
+import PaymentsPage from '@/pages/Payments';
+import EarningsPage from '@/pages/Earnings';
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<Navigate replace to="/dashboard" />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="sessions" element={<Sessions />} />
-              <Route path="schedule" element={<Schedule />} />
-              <Route path="earnings" element={<Earnings />} />
-              <Route path="payments" element={<Payments />} />
-              <Route path="students" element={<Students />} />
-              <Route path="teachers" element={<Teachers />} />
-            </Route>
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+// Protected route component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const App = () => {
+  return (
+    <ThemeProvider defaultTheme="light" storageKey="ui-theme">
+      <QueryProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<IndexPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <DashboardPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/students" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <StudentsPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/teachers" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <TeachersPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/sessions" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <SessionsPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/schedule" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <SchedulePage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/payments" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <PaymentsPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/earnings" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <EarningsPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </BrowserRouter>
+          <Toaster />
+        </AuthProvider>
+      </QueryProvider>
+    </ThemeProvider>
+  );
+};
 
 export default App;

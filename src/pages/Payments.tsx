@@ -1,11 +1,12 @@
-
-import React, { useState } from 'react';
-import { payments, sessions } from '@/lib/mock-data';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { StatusBadge } from '@/components/ui-custom/StatusBadge';
 import { RecordPaymentModal } from '@/components/modals/RecordPaymentModal';
+import { getPayments } from '@/lib/api/payments';
+import { getSessions, getSessionById } from '@/lib/api/sessions';
+import { useQuery } from '@tanstack/react-query';
 import {
   Table,
   TableBody,
@@ -20,7 +21,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
@@ -30,9 +30,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { format, parseISO } from 'date-fns';
-import { Search, Plus, Filter, Upload, MoreVertical, Eye, Calendar } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
-import { PaymentMethod, Session } from '@/types';
+import { Search, Plus, Filter, MoreVertical, Eye, Calendar } from 'lucide-react';
+import { PaymentMethod, Session, Payment } from '@/types';
 
 // New component for viewing session details
 const SessionDetailsDialog = ({ 
@@ -119,12 +118,32 @@ const SessionDetailsDialog = ({
 const PaymentsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [methodFilter, setMethodFilter] = useState<PaymentMethod | null>(null);
-  const [selectedPayment, setSelectedPayment] = useState<typeof payments[0] | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [showRecordPaymentModal, setShowRecordPaymentModal] = useState(false);
   
   // New state for session details dialog
   const [showSessionDetails, setShowSessionDetails] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  
+  // Fetch payments with React Query
+  const { data: payments = [], isLoading: isLoadingPayments } = useQuery({
+    queryKey: ['payments'],
+    queryFn: async () => {
+      const { data, error } = await getPayments();
+      if (error) throw new Error(error.message);
+      return data || [];
+    }
+  });
+  
+  // Fetch sessions
+  const { data: sessions = [] } = useQuery({
+    queryKey: ['sessions'],
+    queryFn: async () => {
+      const { data, error } = await getSessions();
+      if (error) throw new Error(error.message);
+      return data || [];
+    }
+  });
   
   // Filter payments based on search and method
   const filteredPayments = payments.filter(payment => {
@@ -222,7 +241,13 @@ const PaymentsPage: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPayments.length === 0 ? (
+                {isLoadingPayments ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center">
+                      Loading payments...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredPayments.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="h-24 text-center">
                       No payments found.
@@ -252,7 +277,7 @@ const PaymentsPage: React.FC = () => {
                           <span className="capitalize">{payment.method.replace('-', ' ')}</span>
                         </TableCell>
                         
-                        {/* New Session Button Column */}
+                        {/* Session Button Column */}
                         <TableCell>
                           {session ? (
                             <Button 

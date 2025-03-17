@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { sessions, getSessionsByTeacher, students, users, payments } from '@/lib/mock-data';
+import { getSessions, getSessionsByTeacher } from '@/lib/api/sessions';
+import { getPaymentsBySessionId } from '@/lib/api/payments';
+import { getStudents } from '@/lib/api/students';
+import { getUsers } from '@/lib/api/users';
+import { useQuery } from '@tanstack/react-query';
 import { Session, SessionStatus, Payment } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -157,12 +161,46 @@ const SessionsPage: React.FC = () => {
   const [showSessionPayments, setShowSessionPayments] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   
-  const allSessions = user?.role === 'teacher' 
-    ? getSessionsByTeacher(user.id)
-    : sessions;
+  // Fetch sessions with React Query
+  const { data: sessions = [], isLoading: isLoadingSessions } = useQuery({
+    queryKey: ['sessions', user?.id, user?.role],
+    queryFn: async () => {
+      if (user?.role === 'teacher') {
+        const { data, error } = await getSessionsByTeacher(user.id);
+        if (error) throw new Error(error.message);
+        return data || [];
+      } else {
+        const { data, error } = await getSessions();
+        if (error) throw new Error(error.message);
+        return data || [];
+      }
+    },
+    enabled: !!user
+  });
+  
+  // Fetch teachers
+  const { data: teachers = [] } = useQuery({
+    queryKey: ['teachers'],
+    queryFn: async () => {
+      const { data, error } = await getUsers();
+      if (error) throw new Error(error.message);
+      return data?.filter(u => u.role === 'teacher') || [];
+    },
+    enabled: user?.role !== 'teacher'
+  });
+  
+  // Fetch students
+  const { data: students = [] } = useQuery({
+    queryKey: ['students'],
+    queryFn: async () => {
+      const { data, error } = await getStudents();
+      if (error) throw new Error(error.message);
+      return data || [];
+    }
+  });
   
   // Filter sessions based on search, status, and other filters
-  const filteredSessions = allSessions.filter(session => {
+  const filteredSessions = sessions.filter(session => {
     // Search filter
     const matchesSearch = 
       session.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -197,8 +235,9 @@ const SessionsPage: React.FC = () => {
   });
   
   // Utility function to check if a session has payments
-  const hasPayments = (sessionId: string) => {
-    return payments.some(payment => payment.sessionId === sessionId);
+  const hasPayments = async (sessionId: string) => {
+    const { data } = await getPaymentsBySessionId(sessionId);
+    return (data || []).length > 0;
   };
   
   // Handler for viewing session payments
@@ -375,7 +414,7 @@ const SessionsPage: React.FC = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="">All Teachers</SelectItem>
-                        {users
+                        {teachers
                           .filter(u => u.role === 'teacher')
                           .map(teacher => (
                             <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
@@ -462,7 +501,13 @@ const SessionsPage: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSessions.length === 0 ? (
+                {isLoadingSessions ? (
+                  <TableRow>
+                    <TableCell colSpan={user?.role !== 'teacher' ? 7 : 6} className="h-24 text-center">
+                      Loading sessions...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredSessions.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={user?.role !== 'teacher' ? 7 : 6} className="h-24 text-center">
                       No sessions found.
@@ -499,18 +544,16 @@ const SessionsPage: React.FC = () => {
                               Confirmed by Teacher
                             </span>
                           )}
-                          {/* New: View payment button if there are payments for this session */}
-                          {hasPayments(session.id) && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="flex items-center mt-1 h-6 text-primary text-xs"
-                              onClick={() => handleViewSessionPayments(session.id)}
-                            >
-                              <CreditCard className="h-3 w-3 mr-1" />
-                              View Payment
-                            </Button>
-                          )}
+                          {/* View payment button using React Query */}
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="flex items-center mt-1 h-6 text-primary text-xs"
+                            onClick={() => handleViewSessionPayments(session.id)}
+                          >
+                            <CreditCard className="h-3 w-3 mr-1" />
+                            View Payment
+                          </Button>
                         </div>
                       </TableCell>
                       
