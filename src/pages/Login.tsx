@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -8,16 +8,35 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { users } from '@/lib/mock-data';
 import { toast } from '@/hooks/use-toast';
+import { isSupabaseConfigured } from '@/lib/supabase';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isConfigured, setIsConfigured] = useState(true);
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    // Check if Supabase is properly configured
+    setIsConfigured(isSupabaseConfigured());
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isConfigured) {
+      toast({
+        variant: 'destructive',
+        title: 'Configuration Error',
+        description: 'Authentication system is not properly configured. Contact administrator.',
+      });
+      return;
+    }
+    
     setIsLoggingIn(true);
     
     try {
@@ -50,6 +69,16 @@ const Login: React.FC = () => {
           <h1 className="text-3xl font-bold text-primary">AttendanceSphere</h1>
           <p className="text-muted-foreground mt-2">Teaching Attendance & Accounting Solution</p>
         </div>
+        
+        {!isConfigured && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Configuration Error</AlertTitle>
+            <AlertDescription>
+              Supabase authentication is not properly configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.
+            </AlertDescription>
+          </Alert>
+        )}
         
         <Card className="w-full">
           <CardHeader>
@@ -92,7 +121,7 @@ const Login: React.FC = () => {
               <Button 
                 type="submit" 
                 className="w-full" 
-                disabled={isLoggingIn}
+                disabled={isLoggingIn || !isConfigured}
               >
                 {isLoggingIn ? 'Signing in...' : 'Sign In'}
               </Button>

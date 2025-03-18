@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { QueryProvider } from '@/contexts/QueryProvider';
 import { Toaster } from '@/components/ui/toaster';
 import { LoadingScreen } from '@/components/ui-custom/LoadingScreen';
+import { isSupabaseConfigured } from '@/lib/supabase';
 
 import MainLayout from '@/components/layout/MainLayout';
 import IndexPage from '@/pages/Index';
@@ -22,11 +23,18 @@ import EarningsPage from '@/pages/Earnings';
 // Protected route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
-
+  
   if (isLoading) {
     return <LoadingScreen />;
   }
 
+  // If Supabase isn't configured, we still allow access to the app
+  // This is useful for demonstration purposes
+  if (!isSupabaseConfigured()) {
+    return <>{children}</>;
+  }
+  
+  // Normal authentication check
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
