@@ -33,12 +33,16 @@ export const PaymentProofDialog: React.FC<PaymentProofDialogProps> = ({
         </DialogHeader>
         
         <div className="flex items-center justify-center p-4">
-          {payment.proofImageUrl && (
+          {payment.proofImageUrl ? (
             <img 
               src={payment.proofImageUrl} 
               alt="Payment Proof"
               className="max-w-full rounded-md shadow-sm"
             />
+          ) : (
+            <div className="text-muted-foreground text-center p-4">
+              No payment proof image available
+            </div>
           )}
         </div>
         
