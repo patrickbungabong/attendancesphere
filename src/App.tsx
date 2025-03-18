@@ -20,7 +20,7 @@ import PaymentsPage from '@/pages/Payments';
 import EarningsPage from '@/pages/Earnings';
 
 // Protected route component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {

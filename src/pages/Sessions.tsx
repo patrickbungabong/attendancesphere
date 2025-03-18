@@ -63,13 +63,24 @@ import { toast } from '@/hooks/use-toast';
 const SessionPaymentsDialog = ({ 
   open, 
   onOpenChange, 
-  sessionId 
+  sessionId,
+  sessions, 
 }: { 
   open: boolean, 
   onOpenChange: (open: boolean) => void, 
-  sessionId: string | null 
+  sessionId: string | null,
+  sessions: Session[] 
 }) => {
-  const sessionPayments = payments.filter(payment => payment.sessionId === sessionId);
+  const { data: sessionPayments = [] } = useQuery({
+    queryKey: ['payments', sessionId],
+    queryFn: async () => {
+      if (!sessionId) return [];
+      const { data } = await getPaymentsBySessionId(sessionId);
+      return data || [];
+    },
+    enabled: !!sessionId && open
+  });
+  
   const session = sessions.find(s => s.id === sessionId);
   
   return (
@@ -201,7 +212,6 @@ const SessionsPage: React.FC = () => {
   
   // Filter sessions based on search, status, and other filters
   const filteredSessions = sessions.filter(session => {
-    // Search filter
     const matchesSearch = 
       session.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       session.teacherName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -234,10 +244,18 @@ const SessionsPage: React.FC = () => {
            matchesTeacher && matchesStudent && matchesDateRange;
   });
   
-  // Utility function to check if a session has payments
-  const hasPayments = async (sessionId: string) => {
+  // New function to check if a session has payments asynchronously
+  const hasPaymentsCache: Record<string, boolean> = {};
+  
+  const checkHasPayments = async (sessionId: string): Promise<boolean> => {
+    if (hasPaymentsCache[sessionId] !== undefined) {
+      return hasPaymentsCache[sessionId];
+    }
+    
     const { data } = await getPaymentsBySessionId(sessionId);
-    return (data || []).length > 0;
+    const hasPayments = (data || []).length > 0;
+    hasPaymentsCache[sessionId] = hasPayments;
+    return hasPayments;
   };
   
   // Handler for viewing session payments
@@ -544,7 +562,7 @@ const SessionsPage: React.FC = () => {
                               Confirmed by Teacher
                             </span>
                           )}
-                          {/* View payment button using React Query */}
+                          {/* View payment button */}
                           <Button 
                             variant="ghost" 
                             size="sm" 
@@ -697,12 +715,10 @@ const SessionsPage: React.FC = () => {
                                 </DropdownMenuItem>
                               )}
                               
-                              {hasPayments(session.id) && (
-                                <DropdownMenuItem onClick={() => handleViewSessionPayments(session.id)}>
-                                  <CreditCard className="h-4 w-4 mr-2" />
-                                  View Payments
-                                </DropdownMenuItem>
-                              )}
+                              <DropdownMenuItem onClick={() => handleViewSessionPayments(session.id)}>
+                                <CreditCard className="h-4 w-4 mr-2" />
+                                View Payments
+                              </DropdownMenuItem>
                               
                               {user?.role === 'admin' && (
                                 <>
@@ -737,6 +753,7 @@ const SessionsPage: React.FC = () => {
         open={showSessionPayments}
         onOpenChange={setShowSessionPayments}
         sessionId={selectedSessionId}
+        sessions={sessions}
       />
     </div>
   );
