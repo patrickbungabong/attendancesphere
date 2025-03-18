@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { StatusBadge } from '@/components/ui-custom/StatusBadge';
 import { RecordPaymentModal } from '@/components/modals/RecordPaymentModal';
 import { getPayments } from '@/lib/api/payments';
-import { getSessions, getSessionById } from '@/lib/api/sessions';
+import { getSessions } from '@/lib/api/sessions';
 import { useQuery } from '@tanstack/react-query';
 import {
   Table,
@@ -37,11 +38,13 @@ import { PaymentMethod, Session, Payment } from '@/types';
 const SessionDetailsDialog = ({ 
   open, 
   onOpenChange, 
-  sessionId 
+  sessionId,
+  sessions
 }: { 
   open: boolean, 
   onOpenChange: (open: boolean) => void, 
-  sessionId: string | null 
+  sessionId: string | null,
+  sessions: Session[]
 }) => {
   const session = sessions.find(s => s.id === sessionId);
   
@@ -380,6 +383,7 @@ const PaymentsPage: React.FC = () => {
         open={showSessionDetails}
         onOpenChange={setShowSessionDetails}
         sessionId={selectedSessionId}
+        sessions={sessions}
       />
       
       {/* Record Payment Modal */}
