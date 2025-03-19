@@ -27,13 +27,18 @@ const Login: React.FC = () => {
   const [isSigningUp, setIsSigningUp] = useState(false);
   
   const [isConfigured, setIsConfigured] = useState(true);
-  const { login, signup } = useAuth();
+  const { login, signup, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     // Check if Supabase is properly configured
     setIsConfigured(isSupabaseConfigured());
-  }, []);
+    
+    // If already authenticated, redirect to dashboard
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +56,7 @@ const Login: React.FC = () => {
     
     try {
       await login(email, password);
-      navigate('/dashboard');
+      // Navigation happens in the useEffect above when isAuthenticated changes
     } catch (error) {
       console.error('Login error:', error);
     } finally {

@@ -21,7 +21,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -48,9 +47,6 @@ const studentFormSchema = z.object({
   name: z.string().min(2, {
     message: "Name must be at least 2 characters.",
   }),
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
   phone: z.string().min(7, {
     message: "Phone number must be at least 7 characters.",
   }).optional(),
@@ -70,7 +66,6 @@ const StudentsPage: React.FC = () => {
     resolver: zodResolver(studentFormSchema),
     defaultValues: {
       name: '',
-      email: '',
       phone: '',
     },
   });
@@ -78,7 +73,6 @@ const StudentsPage: React.FC = () => {
   // Filter students based on search
   const filteredStudents = students.filter(student => 
     student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (student.phone && student.phone.includes(searchQuery))
   );
   
@@ -96,7 +90,6 @@ const StudentsPage: React.FC = () => {
     setSelectedStudent(student);
     form.reset({
       name: student.name,
-      email: student.email,
       phone: student.phone || '',
     });
     setIsDialogOpen(true);
@@ -125,7 +118,6 @@ const StudentsPage: React.FC = () => {
     setSelectedStudent(null);
     form.reset({
       name: '',
-      email: '',
       phone: '',
     });
     setIsDialogOpen(true);
@@ -184,7 +176,6 @@ const StudentsPage: React.FC = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
@@ -192,7 +183,7 @@ const StudentsPage: React.FC = () => {
               <TableBody>
                 {filteredStudents.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center">
+                    <TableCell colSpan={3} className="h-24 text-center">
                       No students found.
                     </TableCell>
                   </TableRow>
@@ -200,7 +191,6 @@ const StudentsPage: React.FC = () => {
                   filteredStudents.map((student) => (
                     <TableRow key={student.id}>
                       <TableCell className="font-medium">{student.name}</TableCell>
-                      <TableCell>{student.email}</TableCell>
                       <TableCell>{student.phone || '—'}</TableCell>
                       <TableCell>
                         <DropdownMenu>
@@ -259,20 +249,6 @@ const StudentsPage: React.FC = () => {
                       <FormLabel>Name</FormLabel>
                       <FormControl>
                         <Input placeholder="John Doe" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="john.doe@example.com" type="email" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

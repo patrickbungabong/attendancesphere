@@ -15,7 +15,6 @@ export const getStudents = async (): Promise<{ data: Student[] | null; error: an
     const students: Student[] = data.map(student => ({
       id: student.id,
       name: student.name,
-      email: student.email,
       phone: student.phone || undefined
     }));
     
@@ -39,7 +38,6 @@ export const getStudentById = async (id: string): Promise<{ data: Student | null
     const student: Student = {
       id: data.id,
       name: data.name,
-      email: data.email,
       phone: data.phone || undefined
     };
     
@@ -55,7 +53,6 @@ export const createStudent = async (student: Omit<Student, 'id'>): Promise<{ dat
       .from('students')
       .insert([{
         name: student.name,
-        email: student.email,
         phone: student.phone
       }])
       .select()
@@ -67,7 +64,6 @@ export const createStudent = async (student: Omit<Student, 'id'>): Promise<{ dat
     const newStudent: Student = {
       id: data.id,
       name: data.name,
-      email: data.email,
       phone: data.phone || undefined
     };
     
@@ -83,7 +79,6 @@ export const updateStudent = async (id: string, student: Partial<Student>): Prom
       .from('students')
       .update({
         name: student.name,
-        email: student.email,
         phone: student.phone
       })
       .eq('id', id)
@@ -96,7 +91,6 @@ export const updateStudent = async (id: string, student: Partial<Student>): Prom
     const updatedStudent: Student = {
       id: data.id,
       name: data.name,
-      email: data.email,
       phone: data.phone || undefined
     };
     
