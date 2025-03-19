@@ -1,11 +1,12 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { sessions, getSessionsByTeacher } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/ui-custom/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getSessionsByTeacher, getSessions } from '@/lib/api/sessions';
+import { useQuery } from '@tanstack/react-query';
 import { format, parseISO, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay } from 'date-fns';
 
 const SchedulePage: React.FC = () => {
@@ -17,16 +18,28 @@ const SchedulePage: React.FC = () => {
   // Get all days in the current week
   const days = eachDayOfInterval({ start, end });
   
-  // Get sessions based on role
-  const allSessions = user?.role === 'teacher'
-    ? getSessionsByTeacher(user.id)
-    : sessions;
+  // Fetch sessions based on role with React Query
+  const { data: sessions = [], isLoading } = useQuery({
+    queryKey: ['sessions', user?.id, user?.role],
+    queryFn: async () => {
+      if (user?.role === 'teacher') {
+        const { data, error } = await getSessionsByTeacher(user.id);
+        if (error) throw new Error(error.message);
+        return data || [];
+      } else {
+        const { data, error } = await getSessions();
+        if (error) throw new Error(error.message);
+        return data || [];
+      }
+    },
+    enabled: !!user
+  });
   
   // Group sessions by day
   const sessionsByDay = days.map(day => {
     return {
       date: day,
-      sessions: allSessions.filter(session => {
+      sessions: sessions.filter(session => {
         const sessionDate = parseISO(session.date);
         return isSameDay(sessionDate, day);
       })
@@ -64,45 +77,49 @@ const SchedulePage: React.FC = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {sessionsByDay.map(({ date, sessions }) => (
-          <Card key={date.toString()} className="overflow-hidden">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-center">
-                {format(date, 'EEEE')}
-                <div className="text-sm font-normal text-muted-foreground">
-                  {format(date, 'MMMM d, yyyy')}
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {sessions.length === 0 ? (
-                <div className="p-4 text-center text-muted-foreground">
-                  No sessions scheduled
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {sessions.map((session) => (
-                    <div key={session.id} className="p-3 hover:bg-muted/50">
-                      <div className="flex justify-between items-start mb-1">
-                        <div className="font-medium">
-                          {session.startTime} - {session.endTime}
+      {isLoading ? (
+        <div className="text-center py-10">Loading schedule...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {sessionsByDay.map(({ date, sessions }) => (
+            <Card key={date.toString()} className="overflow-hidden">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-center">
+                  {format(date, 'EEEE')}
+                  <div className="text-sm font-normal text-muted-foreground">
+                    {format(date, 'MMMM d, yyyy')}
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {sessions.length === 0 ? (
+                  <div className="p-4 text-center text-muted-foreground">
+                    No sessions scheduled
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {sessions.map((session) => (
+                      <div key={session.id} className="p-3 hover:bg-muted/50">
+                        <div className="flex justify-between items-start mb-1">
+                          <div className="font-medium">
+                            {session.startTime} - {session.endTime}
+                          </div>
+                          <StatusBadge status={session.status} />
                         </div>
-                        <StatusBadge status={session.status} />
+                        
+                        <div className="text-sm">
+                          <div>{session.studentName}</div>
+                          <div className="text-muted-foreground">{session.teacherName}</div>
+                        </div>
                       </div>
-                      
-                      <div className="text-sm">
-                        <div>{session.studentName}</div>
-                        <div className="text-muted-foreground">{session.teacherName}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -9,6 +9,56 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      payments: {
+        Row: {
+          admin_fee: number
+          amount: number
+          confirmed_by_teacher: boolean | null
+          created_at: string
+          date: string
+          id: string
+          method: string
+          notes: string | null
+          proof_image_url: string | null
+          session_id: string
+          teacher_fee: number
+        }
+        Insert: {
+          admin_fee?: number
+          amount: number
+          confirmed_by_teacher?: boolean | null
+          created_at?: string
+          date: string
+          id?: string
+          method: string
+          notes?: string | null
+          proof_image_url?: string | null
+          session_id: string
+          teacher_fee?: number
+        }
+        Update: {
+          admin_fee?: number
+          amount?: number
+          confirmed_by_teacher?: boolean | null
+          created_at?: string
+          date?: string
+          id?: string
+          method?: string
+          notes?: string | null
+          proof_image_url?: string | null
+          session_id?: string
+          teacher_fee?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar: string | null
@@ -33,6 +83,112 @@ export type Database = {
           name?: string | null
           role?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      sessions: {
+        Row: {
+          attendance_confirmed: boolean
+          cancel_reason: string | null
+          cancelled_by: string | null
+          created_at: string
+          date: string
+          end_time: string
+          id: string
+          makeup_session_id: string | null
+          notes: string | null
+          payment_confirmed_by_teacher: boolean | null
+          payment_status: string
+          reschedule_date: string | null
+          start_time: string
+          status: string
+          student_id: string
+          teacher_attendance_confirmed: boolean | null
+          teacher_id: string
+        }
+        Insert: {
+          attendance_confirmed?: boolean
+          cancel_reason?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          date: string
+          end_time: string
+          id?: string
+          makeup_session_id?: string | null
+          notes?: string | null
+          payment_confirmed_by_teacher?: boolean | null
+          payment_status?: string
+          reschedule_date?: string | null
+          start_time: string
+          status?: string
+          student_id: string
+          teacher_attendance_confirmed?: boolean | null
+          teacher_id: string
+        }
+        Update: {
+          attendance_confirmed?: boolean
+          cancel_reason?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          date?: string
+          end_time?: string
+          id?: string
+          makeup_session_id?: string | null
+          notes?: string | null
+          payment_confirmed_by_teacher?: boolean | null
+          payment_status?: string
+          reschedule_date?: string | null
+          start_time?: string
+          status?: string
+          student_id?: string
+          teacher_attendance_confirmed?: boolean | null
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_makeup_session_id_fkey"
+            columns: ["makeup_session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
         }
         Relationships: []
       }
