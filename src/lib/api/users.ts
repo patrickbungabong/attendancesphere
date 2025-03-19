@@ -1,6 +1,6 @@
 
 import { supabase, handleSupabaseError } from '../supabase';
-import { User } from '@/types';
+import { User, UserRole } from '@/types';
 
 export const getUsers = async (): Promise<{ data: User[] | null; error: any }> => {
   try {
@@ -46,7 +46,7 @@ export const getUserByEmail = async (email: string): Promise<{ data: User | null
             id: authUser.user.id,
             name: email.split('@')[0], // Use part of email as name
             email: email,
-            role: 'user',
+            role: 'teacher' as UserRole, // Fixed the type error by using a valid UserRole
             avatar: undefined
           },
           error: null
@@ -61,7 +61,7 @@ export const getUserByEmail = async (email: string): Promise<{ data: User | null
       id: data.id,
       name: data.name || email.split('@')[0], // Use part of email as name if not set
       email: email,
-      role: data.role as any,
+      role: data.role as UserRole,
       avatar: data.avatar || undefined
     };
     
