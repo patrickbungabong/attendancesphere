@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '@/types';
 import { toast } from '@/hooks/use-toast';
@@ -43,16 +42,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (session) {
           // We have a session, get the user profile
-          const email = session.user.email;
-          if (email) {
-            const { data: userData, error } = await getUserByEmail(email);
-            if (userData && !error) {
-              setUser(userData);
-            } else {
-              // Session exists but user not in database
-              console.error("User authenticated but not found in database:", error);
-              await supabase.auth.signOut();
-            }
+          const { data: userData, error } = await getUserByEmail(session.user.email);
+          if (userData && !error) {
+            setUser(userData);
+          } else {
+            // Session exists but user not in database
+            console.error("User authenticated but not found in database:", error);
+            await supabase.auth.signOut();
           }
         }
       } catch (error) {

@@ -28,21 +28,33 @@ export const getUsers = async (): Promise<{ data: User[] | null; error: any }> =
 
 export const getUserByEmail = async (email: string): Promise<{ data: User | null; error: any }> => {
   try {
-    // First get the user from auth.users
-    const { data: authUser, error: authError } = await supabase
-      .auth.admin.getUserByEmail(email);
-    
-    if (authError) throw authError;
-    if (!authUser) throw new Error('User not found');
-    
-    // Then get the profile
+    // Get the user from profiles table by email
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', authUser.id)
+      .eq('email', email)
       .single();
     
-    if (error) throw error;
+    if (error) {
+      // If not found in profiles, try to get from auth and then create a profile
+      const { data: authUser } = await supabase.auth.getUser();
+      
+      if (authUser && authUser.user && authUser.user.email === email) {
+        // User exists in auth but not in profiles, return basic data
+        return { 
+          data: {
+            id: authUser.user.id,
+            name: email.split('@')[0], // Use part of email as name
+            email: email,
+            role: 'user',
+            avatar: undefined
+          },
+          error: null
+        };
+      }
+      
+      throw error;
+    }
     
     // Transform from database schema to our app types
     const user: User = {
