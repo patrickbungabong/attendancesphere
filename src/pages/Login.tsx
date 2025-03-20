@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { users } from '@/lib/mock-data';
 import { toast } from '@/hooks/use-toast';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { UserRole } from '@/types';
 
 const Login: React.FC = () => {
   // Login state
@@ -23,6 +25,7 @@ const Login: React.FC = () => {
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupName, setSignupName] = useState('');
+  const [signupRole, setSignupRole] = useState<UserRole>('teacher');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSigningUp, setIsSigningUp] = useState(false);
   
@@ -88,12 +91,13 @@ const Login: React.FC = () => {
     setIsSigningUp(true);
     
     try {
-      await signup(signupEmail, signupPassword, signupName);
+      await signup(signupEmail, signupPassword, signupName, signupRole);
       // Clear the form
       setSignupEmail('');
       setSignupPassword('');
       setSignupName('');
       setConfirmPassword('');
+      setSignupRole('teacher');
       // Switch to login tab
       document.getElementById('login-tab')?.click();
       
@@ -255,6 +259,22 @@ const Login: React.FC = () => {
                       onChange={(e) => setSignupEmail(e.target.value)}
                       required
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-role">Role</Label>
+                    <Select
+                      value={signupRole}
+                      onValueChange={(value: UserRole) => setSignupRole(value)}
+                    >
+                      <SelectTrigger id="signup-role">
+                        <SelectValue placeholder="Select a role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="teacher">Teacher</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="owner">Owner</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Password</Label>
