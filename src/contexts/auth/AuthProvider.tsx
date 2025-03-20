@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from '@/types';
 import { toast } from '@/hooks/use-toast';
@@ -85,13 +84,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: 'Configuration Error',
         description: 'Authentication system is not properly configured. Contact administrator.',
       });
-      return;
+      return { error: 'Configuration error' };
     }
     
     setIsLoading(true);
     try {
       // Authenticate with Supabase
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -109,6 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           title: 'Login Successful',
           description: `Welcome back, ${userData.name}!`,
         });
+        return { data, error: null };
       } else {
         toast({
           variant: 'destructive',
@@ -117,6 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         // Sign out since we couldn't find the user in our database
         await supabase.auth.signOut();
+        return { error: 'User not found' };
       }
     } catch (error: any) {
       toast({
@@ -125,6 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: error.message || 'An error occurred during login',
       });
       console.error('Login error', error);
+      return { error: error.message || 'Login failed' };
     } finally {
       setIsLoading(false);
     }
