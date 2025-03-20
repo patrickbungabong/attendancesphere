@@ -1,11 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
-import { format, parseISO } from 'date-fns';
+import React, { useState } from 'react';
 import { Upload, DollarSign } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { sessions, students, users } from '@/lib/mock-data';
 import { toast } from '@/hooks/use-toast';
 import { PaymentMethod } from '@/types';
 
@@ -53,9 +51,13 @@ interface RecordPaymentModalProps {
 export function RecordPaymentModal({ open, onOpenChange }: RecordPaymentModalProps) {
   const [studentId, setStudentId] = useState<string | null>(null);
   const [teacherId, setTeacherId] = useState<string | null>(null);
-  const [availableSessions, setAvailableSessions] = useState(sessions);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+
+  // Empty arrays since we removed mock data
+  const sessions: any[] = [];
+  const students: any[] = [];
+  const teachers: any[] = [];
 
   // Create the form
   const form = useForm<RecordPaymentFormValues>({
@@ -66,27 +68,6 @@ export function RecordPaymentModal({ open, onOpenChange }: RecordPaymentModalPro
       notes: '',
     },
   });
-
-  // Filter sessions when student or teacher changes
-  useEffect(() => {
-    let filtered = sessions;
-    
-    if (studentId) {
-      filtered = filtered.filter(s => s.studentId === studentId);
-    }
-    
-    if (teacherId) {
-      filtered = filtered.filter(s => s.teacherId === teacherId);
-    }
-    
-    // Only include sessions that are completed but not fully paid
-    filtered = filtered.filter(s => 
-      s.status === 'completed' && 
-      (s.paymentStatus === 'pending' || s.paymentStatus === 'partially-paid')
-    );
-    
-    setAvailableSessions(filtered);
-  }, [studentId, teacherId]);
 
   // Calculate teacher fee and admin fee
   const amount = form.watch('amount') || 0;
@@ -112,15 +93,10 @@ export function RecordPaymentModal({ open, onOpenChange }: RecordPaymentModalPro
     console.log('Recording payment:', values);
     console.log('Payment proof:', uploadedFile);
     
-    // Here you would typically send this data to your backend API
-    const selectedSession = sessions.find(s => s.id === values.sessionId);
-    
-    if (selectedSession) {
-      toast({
-        title: "Payment recorded",
-        description: `Payment of ₱${values.amount} for ${selectedSession.studentName}'s session with ${selectedSession.teacherName} has been recorded.`,
-      });
-    }
+    toast({
+      title: "Payment recorded",
+      description: `Payment of ₱${values.amount} has been recorded.`,
+    });
     
     // Reset the form and state
     form.reset();
@@ -177,7 +153,7 @@ export function RecordPaymentModal({ open, onOpenChange }: RecordPaymentModalPro
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Teachers</SelectItem>
-                    {users
+                    {teachers
                       .filter(u => u.role === 'teacher')
                       .map(teacher => (
                         <SelectItem key={teacher.id} value={teacher.id}>
@@ -203,14 +179,14 @@ export function RecordPaymentModal({ open, onOpenChange }: RecordPaymentModalPro
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {availableSessions.length === 0 ? (
+                        {sessions.length === 0 ? (
                           <SelectItem value="no-sessions" disabled>
                             No unpaid sessions available
                           </SelectItem>
                         ) : (
-                          availableSessions.map(session => (
+                          sessions.map(session => (
                             <SelectItem key={session.id} value={session.id}>
-                              {session.studentName} with {session.teacherName} - {format(parseISO(session.date), 'MMM dd, yyyy')} ({session.startTime})
+                              {session.studentName} with {session.teacherName}
                             </SelectItem>
                           ))
                         )}

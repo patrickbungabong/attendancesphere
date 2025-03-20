@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User } from '@/types';
+import { User, UserRole } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { getUserByEmail } from '@/lib/api/users';

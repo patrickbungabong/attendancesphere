@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { students } from '@/lib/mock-data';
+import { useAuth } from '@/contexts/auth';
 import { Student } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,6 +59,9 @@ const StudentsPage: React.FC = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // Empty students array since we removed mock data
+  const students: Student[] = [];
   
   // Form for adding/editing students
   const form = useForm<StudentFormValues>({

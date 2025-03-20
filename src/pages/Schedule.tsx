@@ -1,13 +1,13 @@
 
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/ui-custom/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getSessionsByTeacher, getSessions } from '@/lib/api/sessions';
 import { useQuery } from '@tanstack/react-query';
-import { format, parseISO, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay, parseISO } from 'date-fns';
 
 const SchedulePage: React.FC = () => {
   const { user } = useAuth();

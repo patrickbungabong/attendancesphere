@@ -50,44 +50,24 @@ const Earnings: React.FC = () => {
             title="Total Earnings"
             value={earningsData.totalEarnings}
             icon="dollar-sign"
-            trend={{
-              value: 0,
-              label: "from last month",
-              direction: "up"
-            }}
             valuePrefix="$"
           />
           <MetricCard
             title="Weekly Earnings"
             value={earningsData.weeklyEarnings}
             icon="trending-up"
-            trend={{
-              value: 0,
-              label: "from last week",
-              direction: "up"
-            }}
             valuePrefix="$"
           />
           <MetricCard
             title="Daily Earnings"
             value={earningsData.dailyEarnings}
             icon="calendar"
-            trend={{
-              value: 0,
-              label: "from yesterday",
-              direction: "down"
-            }}
             valuePrefix="$"
           />
           <MetricCard
             title="Sessions Count"
             value={earningsData.sessionsCount}
             icon="users"
-            trend={{
-              value: 0,
-              label: "from last month",
-              direction: "up"
-            }}
           />
         </div>
       )}
@@ -95,7 +75,6 @@ const Earnings: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <StatsCard 
           title="Monthly Earnings"
-          subtitle="Total earnings per month"
           type="bar"
           data={[
             { name: 'Jan', value: 0 },
@@ -112,7 +91,6 @@ const Earnings: React.FC = () => {
         />
         <StatsCard 
           title="Sessions Distribution"
-          subtitle="By payment status"
           type="pie"
           data={[
             { name: 'Paid', value: 0, color: '#10b981' },

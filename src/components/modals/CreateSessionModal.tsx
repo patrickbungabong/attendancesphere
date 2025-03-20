@@ -5,7 +5,6 @@ import { CalendarIcon, Clock } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { students, users } from '@/lib/mock-data';
 import { toast } from '@/hooks/use-toast';
 
 import {
@@ -67,7 +66,9 @@ export function CreateSessionModal({ open, onOpenChange }: CreateSessionModalPro
     },
   });
 
-  const teachers = users.filter(u => u.role === 'teacher');
+  // Empty arrays since we removed mock data
+  const students: {id: string, name: string}[] = [];
+  const teachers: {id: string, name: string}[] = [];
 
   const onSubmit = (values: CreateSessionFormValues) => {
     console.log('Creating session:', values);
@@ -75,7 +76,7 @@ export function CreateSessionModal({ open, onOpenChange }: CreateSessionModalPro
     // Here you would typically send this data to your backend API
     toast({
       title: "Session created",
-      description: `Session for ${students.find(s => s.id === values.studentId)?.name} with ${teachers.find(t => t.id === values.teacherId)?.name} on ${format(values.date, 'MMMM dd, yyyy')} at ${values.startTime}`,
+      description: `Session scheduled on ${format(values.date, 'MMMM dd, yyyy')} at ${values.startTime}`,
     });
     
     form.reset();
@@ -196,11 +197,17 @@ export function CreateSessionModal({ open, onOpenChange }: CreateSessionModalPro
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {students.map(student => (
-                          <SelectItem key={student.id} value={student.id}>
-                            {student.name}
+                        {students.length === 0 ? (
+                          <SelectItem value="no-students" disabled>
+                            No students available
                           </SelectItem>
-                        ))}
+                        ) : (
+                          students.map(student => (
+                            <SelectItem key={student.id} value={student.id}>
+                              {student.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -222,11 +229,17 @@ export function CreateSessionModal({ open, onOpenChange }: CreateSessionModalPro
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {teachers.map(teacher => (
-                          <SelectItem key={teacher.id} value={teacher.id}>
-                            {teacher.name}
+                        {teachers.length === 0 ? (
+                          <SelectItem value="no-teachers" disabled>
+                            No teachers available
                           </SelectItem>
-                        ))}
+                        ) : (
+                          teachers.map(teacher => (
+                            <SelectItem key={teacher.id} value={teacher.id}>
+                              {teacher.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
