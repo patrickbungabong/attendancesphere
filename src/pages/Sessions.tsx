@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { getSessions, getSessionsByTeacher } from '@/lib/api/sessions';
 import { getPaymentsBySessionId } from '@/lib/api/payments';
 import { getStudents } from '@/lib/api/students';

@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 interface MetricCardProps {
   title: string;
   value: string | number;
-  icon?: React.ReactNode;
+  icon?: string;
   description?: string;
   className?: string;
+  valuePrefix?: string;
 }
 
 export const MetricCard: React.FC<MetricCardProps> = ({ 
@@ -15,7 +16,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   value, 
   icon, 
   description,
-  className 
+  className,
+  valuePrefix 
 }) => {
   return (
     <Card className={className}>
@@ -24,7 +26,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         {icon && <div className="text-muted-foreground">{icon}</div>}
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-2xl font-bold">{valuePrefix || ''}{value}</div>
         {description && (
           <p className="text-xs text-muted-foreground mt-1">{description}</p>
         )}

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface StatsCardProps {
   title: string;
-  value: string | number;
+  value?: string | number;
   icon?: React.ReactNode;
   description?: string;
   trend?: {
@@ -13,6 +13,13 @@ interface StatsCardProps {
     isPositive: boolean;
   };
   className?: string;
+  // Chart properties
+  type?: 'bar' | 'line' | 'pie' | 'area';
+  data?: any[];
+  dataKey?: string;
+  categoryKey?: string;
+  valuePrefix?: string;
+  isLoading?: boolean;
 }
 
 export const StatsCard: React.FC<StatsCardProps> = ({
@@ -22,6 +29,13 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   description,
   trend,
   className,
+  // Chart properties are not used in this simple version
+  type,
+  data,
+  dataKey,
+  categoryKey,
+  valuePrefix,
+  isLoading,
 }) => {
   return (
     <Card className={cn("overflow-hidden transition-all", className)}>
@@ -30,7 +44,9 @@ export const StatsCard: React.FC<StatsCardProps> = ({
         {icon && <div className="text-muted-foreground">{icon}</div>}
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        {value !== undefined && (
+          <div className="text-2xl font-bold">{valuePrefix || ''}{value}</div>
+        )}
         {(description || trend) && (
           <p className="text-xs text-muted-foreground mt-1">
             {trend && (
@@ -45,6 +61,13 @@ export const StatsCard: React.FC<StatsCardProps> = ({
             )}
             {description}
           </p>
+        )}
+        {/* Note: In a real implementation, we'd render charts here based on type, data, etc. */}
+        {isLoading && <div className="h-20 bg-gray-100 animate-pulse rounded mt-2"></div>}
+        {!isLoading && data && data.length > 0 && (
+          <div className="h-20 bg-gray-100 rounded mt-2 flex items-center justify-center">
+            <span className="text-sm text-muted-foreground">Chart placeholder ({type})</span>
+          </div>
         )}
       </CardContent>
     </Card>
