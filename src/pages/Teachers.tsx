@@ -1,330 +1,243 @@
 
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { users } from '@/lib/mock-data';
-import { User } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { toast } from '@/hooks/use-toast';
-import { Plus, Search, MoreVertical, UserPlus, FileEdit, Trash, History, DollarSign } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Search, Filter, Plus, Mail, Phone, UserCheck, Clock, DollarSign } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/contexts/auth';
+import { User, UserRole } from '@/types';
 
-const teacherFormSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
-  avatar: z.string().optional(),
-});
+const initialTeachers: User[] = [];
 
-type TeacherFormValues = z.infer<typeof teacherFormSchema>;
-
-const TeachersPage: React.FC = () => {
+const Teachers: React.FC = () => {
   const { user } = useAuth();
+  const [teachers, setTeachers] = useState<User[]>(initialTeachers);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedTeacher, setSelectedTeacher] = useState<User | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [isAddingTeacher, setIsAddingTeacher] = useState(false);
   
-  // Form for adding/editing teachers
-  const form = useForm<TeacherFormValues>({
-    resolver: zodResolver(teacherFormSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      avatar: '',
-    },
+  // New teacher form state
+  const [newTeacherName, setNewTeacherName] = useState('');
+  const [newTeacherEmail, setNewTeacherEmail] = useState('');
+  const [newTeacherRole, setNewTeacherRole] = useState<UserRole>('teacher');
+  
+  const filteredTeachers = teachers.filter(teacher => {
+    const matchesSearch = teacher.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         teacher.email.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesRole = roleFilter === 'all' || teacher.role === roleFilter;
+    
+    return matchesSearch && matchesRole;
   });
-  
-  // Filter teachers based on search
-  const teachers = users.filter(user => user.role === 'teacher');
-  const filteredTeachers = teachers.filter(teacher => 
-    teacher.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    teacher.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  
-  const handleCreateTeacher = (data: TeacherFormValues) => {
-    toast({
-      title: 'Teacher Created',
-      description: `${data.name} has been successfully added.`,
-    });
-    form.reset();
-    setIsDialogOpen(false);
+
+  const handleAddTeacher = () => {
+    if (!newTeacherName || !newTeacherEmail) return;
+    
+    const newTeacher: User = {
+      id: `t${teachers.length + 1}`,
+      name: newTeacherName,
+      email: newTeacherEmail,
+      role: newTeacherRole,
+      avatar: `https://i.pravatar.cc/150?img=${teachers.length + 10}` // Random avatar
+    };
+    
+    setTeachers([...teachers, newTeacher]);
+    
+    // Reset form
+    setNewTeacherName('');
+    setNewTeacherEmail('');
+    setNewTeacherRole('teacher');
+    setIsAddingTeacher(false);
   };
-  
-  const handleEditTeacher = (teacher: User) => {
-    setIsEditMode(true);
-    setSelectedTeacher(teacher);
-    form.reset({
-      name: teacher.name,
-      email: teacher.email,
-      avatar: teacher.avatar || '',
-    });
-    setIsDialogOpen(true);
+
+  // Function to get initials from a name
+  const getInitials = (name: string) => {
+    return name.split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase();
   };
-  
-  const handleUpdateTeacher = (data: TeacherFormValues) => {
-    toast({
-      title: 'Teacher Updated',
-      description: `${data.name}'s information has been updated.`,
-    });
-    form.reset();
-    setIsDialogOpen(false);
-    setIsEditMode(false);
-    setSelectedTeacher(null);
-  };
-  
-  const handleDeleteTeacher = (teacher: User) => {
-    toast({
-      title: 'Teacher Removed',
-      description: `${teacher.name} has been removed from the system.`,
-    });
-  };
-  
-  const openCreateDialog = () => {
-    setIsEditMode(false);
-    setSelectedTeacher(null);
-    form.reset({
-      name: '',
-      email: '',
-      avatar: '',
-    });
-    setIsDialogOpen(true);
-  };
-  
-  // Only admin and owner can manage teachers
-  if (user?.role === 'teacher') {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <h1 className="text-2xl font-bold">Teachers</h1>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <h2 className="text-lg font-medium">Access Restricted</h2>
-              <p className="text-muted-foreground mt-2">
-                You don't have permission to manage teachers. Please contact an administrator.
-              </p>
+
+  return (
+    <div className="container mx-auto p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+        <h1 className="text-3xl font-bold">Teachers & Staff</h1>
+        
+        {['admin', 'owner'].includes(user?.role || '') && (
+          <Button 
+            onClick={() => setIsAddingTeacher(!isAddingTeacher)} 
+            className="mt-4 sm:mt-0"
+          >
+            <Plus className="mr-2 h-4 w-4" /> Add New Teacher
+          </Button>
+        )}
+      </div>
+      
+      {isAddingTeacher && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Add New Teacher</CardTitle>
+            <CardDescription>Enter the details for the new teacher or staff member</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="teacher-name" className="block text-sm font-medium mb-1">Full Name</label>
+                <Input 
+                  id="teacher-name" 
+                  placeholder="John Doe" 
+                  value={newTeacherName}
+                  onChange={(e) => setNewTeacherName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="teacher-email" className="block text-sm font-medium mb-1">Email</label>
+                <Input 
+                  id="teacher-email" 
+                  type="email" 
+                  placeholder="john@example.com" 
+                  value={newTeacherEmail}
+                  onChange={(e) => setNewTeacherEmail(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="teacher-role" className="block text-sm font-medium mb-1">Role</label>
+                <Select 
+                  value={newTeacherRole} 
+                  onValueChange={(value: UserRole) => setNewTeacherRole(value)}
+                >
+                  <SelectTrigger id="teacher-role">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="teacher">Teacher</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="owner">Owner</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-end">
+                <Button onClick={handleAddTeacher} className="w-full">Add Teacher</Button>
+              </div>
             </div>
           </CardContent>
         </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Teachers</h1>
+      )}
+      
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Input 
+            placeholder="Search teachers..." 
+            className="pl-10"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
         
-        <Button onClick={openCreateDialog}>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add Teacher
-        </Button>
+        <div className="flex items-center gap-2">
+          <Filter size={18} className="text-gray-500" />
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              <SelectItem value="teacher">Teachers</SelectItem>
+              <SelectItem value="admin">Admins</SelectItem>
+              <SelectItem value="owner">Owners</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle>All Teachers</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex mb-6">
-            <div className="relative flex-grow">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search teachers..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+      {filteredTeachers.length === 0 ? (
+        <Card className="border border-dashed">
+          <CardContent className="flex flex-col items-center justify-center text-center p-10">
+            <div className="rounded-full bg-muted p-3 mb-3">
+              <UserCheck size={24} className="text-muted-foreground" />
             </div>
-          </div>
-          
-          <div className="rounded-md border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Teacher</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTeachers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="h-24 text-center">
-                      No teachers found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredTeachers.map((teacher) => (
-                    <TableRow key={teacher.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar>
-                            <AvatarImage src={teacher.avatar} alt={teacher.name} />
-                            <AvatarFallback>{teacher.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div className="font-medium">{teacher.name}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{teacher.email}</TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEditTeacher(teacher)}>
-                              <FileEdit className="h-4 w-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <History className="h-4 w-4 mr-2" />
-                              View Sessions
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <DollarSign className="h-4 w-4 mr-2" />
-                              View Earnings
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              className="text-destructive"
-                              onClick={() => handleDeleteTeacher(teacher)}
-                            >
-                              <Trash className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{isEditMode ? 'Edit Teacher' : 'Add New Teacher'}</DialogTitle>
-            <DialogDescription>
-              {isEditMode 
-                ? "Update the teacher's information below." 
-                : "Fill in the details to add a new teacher."}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(isEditMode ? handleUpdateTeacher : handleCreateTeacher)}>
-              <div className="space-y-4 py-2">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Jane Smith" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="jane.smith@example.com" type="email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="avatar"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Avatar URL (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://example.com/avatar.jpg" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <DialogFooter className="mt-6">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => {
-                    setIsDialogOpen(false);
-                    form.reset();
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit">
-                  {isEditMode ? 'Update Teacher' : 'Add Teacher'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+            <h3 className="text-lg font-medium">No teachers found</h3>
+            <p className="text-muted-foreground mt-1 mb-4">
+              {searchQuery || roleFilter !== 'all' 
+                ? 'Try adjusting your search or filters' 
+                : 'Start by adding your first teacher'}
+            </p>
+            {['admin', 'owner'].includes(user?.role || '') && !isAddingTeacher && (
+              <Button onClick={() => setIsAddingTeacher(true)}>
+                <Plus className="mr-2 h-4 w-4" /> Add Teacher
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredTeachers.map((teacher) => (
+            <Card key={teacher.id} className="overflow-hidden">
+              <CardHeader className="pb-0">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center">
+                    <Avatar className="h-14 w-14 mr-4">
+                      {teacher.avatar ? (
+                        <AvatarImage src={teacher.avatar} alt={teacher.name} />
+                      ) : (
+                        <AvatarFallback>{getInitials(teacher.name)}</AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div>
+                      <CardTitle className="text-xl">{teacher.name}</CardTitle>
+                      <Badge variant={
+                        teacher.role === 'owner' ? 'default' : 
+                        teacher.role === 'admin' ? 'secondary' : 'outline'
+                      } className="mt-1">
+                        {teacher.role.charAt(0).toUpperCase() + teacher.role.slice(1)}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-2 mt-2">
+                  <div className="flex items-center text-sm">
+                    <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <span>{teacher.email}</span>
+                  </div>
+                  
+                  {/* Empty statistics placeholders */}
+                  <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-muted">
+                    <div className="text-center">
+                      <div className="flex justify-center">
+                        <UserCheck size={16} className="text-primary" />
+                      </div>
+                      <div className="text-xl font-bold">0</div>
+                      <div className="text-xs text-muted-foreground">Students</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="flex justify-center">
+                        <Clock size={16} className="text-primary" />
+                      </div>
+                      <div className="text-xl font-bold">0</div>
+                      <div className="text-xs text-muted-foreground">Sessions</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="flex justify-center">
+                        <DollarSign size={16} className="text-primary" />
+                      </div>
+                      <div className="text-xl font-bold">$0</div>
+                      <div className="text-xs text-muted-foreground">Earnings</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-export default TeachersPage;
+export default Teachers;

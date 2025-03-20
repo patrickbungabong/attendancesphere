@@ -1,221 +1,143 @@
 
-import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { getTeacherStats, getSessionsByTeacher, payments, sessions } from '@/lib/mock-data';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MetricCard } from '@/components/ui-custom/MetricCard';
 import { StatsCard } from '@/components/ui-custom/StatsCard';
-import { StatusBadge } from '@/components/ui-custom/StatusBadge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { format, parseISO, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
-import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calendar, Filter, DollarSign } from 'lucide-react';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
+import { useAuth } from '@/contexts/auth';
 
-const EarningsPage: React.FC = () => {
+const Earnings: React.FC = () => {
   const { user } = useAuth();
-  const [periodFilter, setPeriodFilter] = useState<'day' | 'week' | 'month'>('week');
-  
-  if (!user) return null;
-  
-  const teacherStats = getTeacherStats(user.id);
-  const teacherSessions = getSessionsByTeacher(user.id);
-  
-  // Get completed sessions with payments
-  const completedSessions = teacherSessions.filter(
-    session => session.status === 'completed'
-  );
-  
-  // Calculate earnings
-  const teacherPayments = payments.filter(payment => {
-    const session = sessions.find(s => s.id === payment.sessionId);
-    return session && session.teacherId === user.id;
+  const [earningsData, setEarningsData] = useState({
+    totalEarnings: 0,
+    weeklyEarnings: 0,
+    dailyEarnings: 0,
+    sessionsCount: 0
   });
-  
-  const totalEarnings = teacherPayments.reduce((sum, payment) => sum + payment.teacherFee, 0);
-  
-  // Get today's date
-  const today = new Date();
-  const formattedToday = format(today, 'yyyy-MM-dd');
-  
-  // Get week range
-  const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 });
-  const endOfCurrentWeek = endOfWeek(today, { weekStartsOn: 1 });
-  
-  // Create data for weekly earnings chart
-  const daysOfWeek = eachDayOfInterval({
-    start: startOfCurrentWeek,
-    end: endOfCurrentWeek,
-  });
-  
-  const weeklyEarningsData = daysOfWeek.map(day => {
-    const dayString = format(day, 'yyyy-MM-dd');
-    const dayPayments = teacherPayments.filter(p => p.date === dayString);
-    const dayEarnings = dayPayments.reduce((sum, p) => sum + p.teacherFee, 0);
-    
-    return {
-      day: format(day, 'EEE'),
-      date: dayString,
-      earnings: dayEarnings,
-    };
-  });
-  
-  // Calculate today's and this week's earnings
-  const todayEarnings = teacherPayments
-    .filter(p => p.date === formattedToday)
-    .reduce((sum, p) => sum + p.teacherFee, 0);
-  
-  const weekEarnings = teacherPayments
-    .filter(p => {
-      const paymentDate = new Date(p.date);
-      return paymentDate >= startOfCurrentWeek && paymentDate <= endOfCurrentWeek;
-    })
-    .reduce((sum, p) => sum + p.teacherFee, 0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // In a real app, fetch data from API
+    // For now, setting default values since mock data is removed
+    setEarningsData({
+      totalEarnings: 0,
+      weeklyEarnings: 0,
+      dailyEarnings: 0,
+      sessionsCount: 0
+    });
+    setIsLoading(false);
+  }, [user]);
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold">My Earnings</h1>
-        
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="h-8">
-            <Calendar className="h-4 w-4 mr-2" />
-            Select Date Range
-          </Button>
-          
-          <Button variant="outline" size="sm" className="h-8">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6">Teacher Earnings</h1>
+
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader className="p-4">
+                <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <div className="h-8 bg-gray-200 rounded w-2/3"></div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <MetricCard
+            title="Total Earnings"
+            value={earningsData.totalEarnings}
+            icon="dollar-sign"
+            trend={{
+              value: 0,
+              label: "from last month",
+              direction: "up"
+            }}
+            valuePrefix="$"
+          />
+          <MetricCard
+            title="Weekly Earnings"
+            value={earningsData.weeklyEarnings}
+            icon="trending-up"
+            trend={{
+              value: 0,
+              label: "from last week",
+              direction: "up"
+            }}
+            valuePrefix="$"
+          />
+          <MetricCard
+            title="Daily Earnings"
+            value={earningsData.dailyEarnings}
+            icon="calendar"
+            trend={{
+              value: 0,
+              label: "from yesterday",
+              direction: "down"
+            }}
+            valuePrefix="$"
+          />
+          <MetricCard
+            title="Sessions Count"
+            value={earningsData.sessionsCount}
+            icon="users"
+            trend={{
+              value: 0,
+              label: "from last month",
+              direction: "up"
+            }}
+          />
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <StatsCard 
+          title="Monthly Earnings"
+          subtitle="Total earnings per month"
+          type="bar"
+          data={[
+            { name: 'Jan', value: 0 },
+            { name: 'Feb', value: 0 },
+            { name: 'Mar', value: 0 },
+            { name: 'Apr', value: 0 },
+            { name: 'May', value: 0 },
+            { name: 'Jun', value: 0 },
+          ]}
+          dataKey="value"
+          categoryKey="name"
+          valuePrefix="$"
+          isLoading={isLoading}
+        />
+        <StatsCard 
+          title="Sessions Distribution"
+          subtitle="By payment status"
+          type="pie"
+          data={[
+            { name: 'Paid', value: 0, color: '#10b981' },
+            { name: 'Pending', value: 0, color: '#f59e0b' },
+            { name: 'Partially Paid', value: 0, color: '#3b82f6' },
+          ]}
+          dataKey="value"
+          categoryKey="name"
+          isLoading={isLoading}
+        />
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatsCard
-          title="Total Earnings"
-          value={`₱${totalEarnings.toLocaleString()}`}
-          icon={<DollarSign className="h-5 w-5" />}
-          description="All-time earnings"
-        />
-        
-        <StatsCard
-          title="Today's Earnings"
-          value={`₱${todayEarnings.toLocaleString()}`}
-          icon={<DollarSign className="h-5 w-5" />}
-          description={`From ${teacherPayments.filter(p => p.date === formattedToday).length} payments`}
-        />
-        
-        <StatsCard
-          title="This Week's Earnings"
-          value={`₱${weekEarnings.toLocaleString()}`}
-          icon={<DollarSign className="h-5 w-5" />}
-          description={`From ${teacherPayments.filter(p => {
-            const paymentDate = new Date(p.date);
-            return paymentDate >= startOfCurrentWeek && paymentDate <= endOfCurrentWeek;
-          }).length} payments`}
-        />
+
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-4">Upcoming Payments</h2>
+        <Card>
+          <CardHeader>
+            <CardTitle>No upcoming payments</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">When you have sessions with pending payments, they will appear here.</p>
+          </CardContent>
+        </Card>
       </div>
-      
-      <Tabs defaultValue="earnings" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="earnings">Earnings Chart</TabsTrigger>
-          <TabsTrigger value="payments">Payment History</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="earnings" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Weekly Earnings</CardTitle>
-            </CardHeader>
-            <CardContent className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={weeklyEarningsData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => [`₱${Number(value).toLocaleString()}`, 'Earnings']} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="earnings" 
-                    stroke="#3b82f6" 
-                    activeDot={{ r: 8 }} 
-                    strokeWidth={2}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="payments" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-md border overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Student</TableHead>
-                      <TableHead>Session Status</TableHead>
-                      <TableHead>Payment Amount</TableHead>
-                      <TableHead>Your Earnings</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {teacherPayments.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="h-24 text-center">
-                          No payments found.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      teacherPayments.map((payment) => {
-                        const session = sessions.find(s => s.id === payment.sessionId);
-                        return (
-                          <TableRow key={payment.id}>
-                            <TableCell>
-                              {format(parseISO(payment.date), 'MMM dd, yyyy')}
-                            </TableCell>
-                            
-                            <TableCell>{session?.studentName || 'Unknown'}</TableCell>
-                            
-                            <TableCell>
-                              {session && <StatusBadge status={session.status} />}
-                            </TableCell>
-                            
-                            <TableCell>₱{payment.amount.toLocaleString()}</TableCell>
-                            
-                            <TableCell className="font-medium">
-                              ₱{payment.teacherFee.toLocaleString()}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 };
 
-export default EarningsPage;
+export default Earnings;

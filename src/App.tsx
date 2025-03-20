@@ -2,7 +2,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@/components/theme-provider';
-import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { AuthProvider, useAuth } from '@/contexts/auth';
 import { QueryProvider } from '@/contexts/QueryProvider';
 import { Toaster } from '@/components/ui/toaster';
 import { LoadingScreen } from '@/components/ui-custom/LoadingScreen';
