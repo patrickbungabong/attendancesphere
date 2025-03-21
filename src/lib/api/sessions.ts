@@ -27,13 +27,10 @@ export const getSessions = async (): Promise<{ data: Session[] | null; error: an
       studentName: session.students.name,
       status: session.status as SessionStatus,
       attendanceConfirmed: session.attendance_confirmed,
-      teacherAttendanceConfirmed: session.teacher_attendance_confirmed,
-      paymentStatus: session.payment_status as any,
+      paymentStatus: 'pending', // We'll compute this from payments table
       paymentConfirmedByTeacher: session.payment_confirmed_by_teacher,
-      notes: session.notes || undefined,
       cancelledBy: session.cancelled_by as any || undefined,
       cancelReason: session.cancel_reason || undefined,
-      rescheduleDate: session.reschedule_date || undefined,
       makeupSessionId: session.makeup_session_id || undefined
     }));
     
@@ -69,13 +66,10 @@ export const getSessionsByTeacher = async (teacherId: string): Promise<{ data: S
       studentName: session.students.name,
       status: session.status as SessionStatus,
       attendanceConfirmed: session.attendance_confirmed,
-      teacherAttendanceConfirmed: session.teacher_attendance_confirmed,
-      paymentStatus: session.payment_status as any,
+      paymentStatus: 'pending', // We'll compute this from payments table
       paymentConfirmedByTeacher: session.payment_confirmed_by_teacher,
-      notes: session.notes || undefined,
       cancelledBy: session.cancelled_by as any || undefined,
       cancelReason: session.cancel_reason || undefined,
-      rescheduleDate: session.reschedule_date || undefined,
       makeupSessionId: session.makeup_session_id || undefined
     }));
     
@@ -111,13 +105,10 @@ export const getSessionById = async (id: string): Promise<{ data: Session | null
       studentName: data.students.name,
       status: data.status as SessionStatus,
       attendanceConfirmed: data.attendance_confirmed,
-      teacherAttendanceConfirmed: data.teacher_attendance_confirmed,
-      paymentStatus: data.payment_status as any,
+      paymentStatus: 'pending', // We'll compute this from payments table
       paymentConfirmedByTeacher: data.payment_confirmed_by_teacher,
-      notes: data.notes || undefined,
       cancelledBy: data.cancelled_by as any || undefined,
       cancelReason: data.cancel_reason || undefined,
-      rescheduleDate: data.reschedule_date || undefined,
       makeupSessionId: data.makeup_session_id || undefined
     };
     
@@ -139,13 +130,9 @@ export const createSession = async (sessionData: Omit<Session, 'id' | 'teacherNa
         student_id: sessionData.studentId,
         status: sessionData.status,
         attendance_confirmed: sessionData.attendanceConfirmed,
-        teacher_attendance_confirmed: sessionData.teacherAttendanceConfirmed,
-        payment_status: sessionData.paymentStatus,
         payment_confirmed_by_teacher: sessionData.paymentConfirmedByTeacher,
-        notes: sessionData.notes,
         cancelled_by: sessionData.cancelledBy,
         cancel_reason: sessionData.cancelReason,
-        reschedule_date: sessionData.rescheduleDate,
         makeup_session_id: sessionData.makeupSessionId
       }])
       .select(`
@@ -169,13 +156,10 @@ export const createSession = async (sessionData: Omit<Session, 'id' | 'teacherNa
       studentName: data.students.name,
       status: data.status as SessionStatus,
       attendanceConfirmed: data.attendance_confirmed,
-      teacherAttendanceConfirmed: data.teacher_attendance_confirmed,
-      paymentStatus: data.payment_status as any,
+      paymentStatus: 'pending', // We'll compute this from payments table
       paymentConfirmedByTeacher: data.payment_confirmed_by_teacher,
-      notes: data.notes || undefined,
       cancelledBy: data.cancelled_by as any || undefined,
       cancelReason: data.cancel_reason || undefined,
-      rescheduleDate: data.reschedule_date || undefined,
       makeupSessionId: data.makeup_session_id || undefined
     };
     
@@ -196,13 +180,9 @@ export const updateSession = async (id: string, sessionData: Partial<Session>): 
     if (sessionData.studentId !== undefined) updateData.student_id = sessionData.studentId;
     if (sessionData.status !== undefined) updateData.status = sessionData.status;
     if (sessionData.attendanceConfirmed !== undefined) updateData.attendance_confirmed = sessionData.attendanceConfirmed;
-    if (sessionData.teacherAttendanceConfirmed !== undefined) updateData.teacher_attendance_confirmed = sessionData.teacherAttendanceConfirmed;
-    if (sessionData.paymentStatus !== undefined) updateData.payment_status = sessionData.paymentStatus;
     if (sessionData.paymentConfirmedByTeacher !== undefined) updateData.payment_confirmed_by_teacher = sessionData.paymentConfirmedByTeacher;
-    if (sessionData.notes !== undefined) updateData.notes = sessionData.notes;
     if (sessionData.cancelledBy !== undefined) updateData.cancelled_by = sessionData.cancelledBy;
     if (sessionData.cancelReason !== undefined) updateData.cancel_reason = sessionData.cancelReason;
-    if (sessionData.rescheduleDate !== undefined) updateData.reschedule_date = sessionData.rescheduleDate;
     if (sessionData.makeupSessionId !== undefined) updateData.makeup_session_id = sessionData.makeupSessionId;
     
     const { data, error } = await supabase
@@ -230,13 +210,10 @@ export const updateSession = async (id: string, sessionData: Partial<Session>): 
       studentName: data.students.name,
       status: data.status as SessionStatus,
       attendanceConfirmed: data.attendance_confirmed,
-      teacherAttendanceConfirmed: data.teacher_attendance_confirmed,
-      paymentStatus: data.payment_status as any,
+      paymentStatus: 'pending', // We'll compute this from payments table
       paymentConfirmedByTeacher: data.payment_confirmed_by_teacher,
-      notes: data.notes || undefined,
       cancelledBy: data.cancelled_by as any || undefined,
       cancelReason: data.cancel_reason || undefined,
-      rescheduleDate: data.reschedule_date || undefined,
       makeupSessionId: data.makeup_session_id || undefined
     };
     

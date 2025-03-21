@@ -18,7 +18,6 @@ export type Database = {
           date: string
           id: string
           method: string
-          notes: string | null
           proof_image_url: string | null
           session_id: string
           teacher_fee: number
@@ -31,7 +30,6 @@ export type Database = {
           date: string
           id?: string
           method: string
-          notes?: string | null
           proof_image_url?: string | null
           session_id: string
           teacher_fee?: number
@@ -44,7 +42,6 @@ export type Database = {
           date?: string
           id?: string
           method?: string
-          notes?: string | null
           proof_image_url?: string | null
           session_id?: string
           teacher_fee?: number
@@ -61,28 +58,19 @@ export type Database = {
       }
       profiles: {
         Row: {
-          avatar: string | null
-          created_at: string
+          email: string | null
           id: string
-          name: string | null
           role: string | null
-          updated_at: string
         }
         Insert: {
-          avatar?: string | null
-          created_at?: string
+          email?: string | null
           id: string
-          name?: string | null
           role?: string | null
-          updated_at?: string
         }
         Update: {
-          avatar?: string | null
-          created_at?: string
+          email?: string | null
           id?: string
-          name?: string | null
           role?: string | null
-          updated_at?: string
         }
         Relationships: []
       }
@@ -96,14 +84,10 @@ export type Database = {
           end_time: string
           id: string
           makeup_session_id: string | null
-          notes: string | null
           payment_confirmed_by_teacher: boolean | null
-          payment_status: string
-          reschedule_date: string | null
           start_time: string
           status: string
           student_id: string
-          teacher_attendance_confirmed: boolean | null
           teacher_id: string
         }
         Insert: {
@@ -115,14 +99,10 @@ export type Database = {
           end_time: string
           id?: string
           makeup_session_id?: string | null
-          notes?: string | null
           payment_confirmed_by_teacher?: boolean | null
-          payment_status?: string
-          reschedule_date?: string | null
           start_time: string
           status?: string
           student_id: string
-          teacher_attendance_confirmed?: boolean | null
           teacher_id: string
         }
         Update: {
@@ -134,14 +114,10 @@ export type Database = {
           end_time?: string
           id?: string
           makeup_session_id?: string | null
-          notes?: string | null
           payment_confirmed_by_teacher?: boolean | null
-          payment_status?: string
-          reschedule_date?: string | null
           start_time?: string
           status?: string
           student_id?: string
-          teacher_attendance_confirmed?: boolean | null
           teacher_id?: string
         }
         Relationships: [
@@ -170,22 +146,37 @@ export type Database = {
       }
       students: {
         Row: {
-          created_at: string
           id: string
           name: string
-          phone: string | null
         }
         Insert: {
-          created_at?: string
           id?: string
           name: string
-          phone?: string | null
         }
         Update: {
-          created_at?: string
           id?: string
           name?: string
-          phone?: string | null
+        }
+        Relationships: []
+      }
+      teachers: {
+        Row: {
+          email: string
+          id: string
+          name: string
+          number: string | null
+        }
+        Insert: {
+          email: string
+          id?: string
+          name: string
+          number?: string | null
+        }
+        Update: {
+          email?: string
+          id?: string
+          name?: string
+          number?: string | null
         }
         Relationships: []
       }

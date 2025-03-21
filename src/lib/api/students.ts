@@ -14,8 +14,7 @@ export const getStudents = async (): Promise<{ data: Student[] | null; error: an
     // Transform from database schema to our app types
     const students: Student[] = data.map(student => ({
       id: student.id,
-      name: student.name,
-      phone: student.phone || undefined
+      name: student.name
     }));
     
     return { data: students, error: null };
@@ -37,8 +36,7 @@ export const getStudentById = async (id: string): Promise<{ data: Student | null
     // Transform from database schema to our app types
     const student: Student = {
       id: data.id,
-      name: data.name,
-      phone: data.phone || undefined
+      name: data.name
     };
     
     return { data: student, error: null };
@@ -52,8 +50,7 @@ export const createStudent = async (student: Omit<Student, 'id'>): Promise<{ dat
     const { data, error } = await supabase
       .from('students')
       .insert([{
-        name: student.name,
-        phone: student.phone
+        name: student.name
       }])
       .select()
       .single();
@@ -63,8 +60,7 @@ export const createStudent = async (student: Omit<Student, 'id'>): Promise<{ dat
     // Transform from database schema to our app types
     const newStudent: Student = {
       id: data.id,
-      name: data.name,
-      phone: data.phone || undefined
+      name: data.name
     };
     
     return { data: newStudent, error: null };
@@ -78,8 +74,7 @@ export const updateStudent = async (id: string, student: Partial<Student>): Prom
     const { data, error } = await supabase
       .from('students')
       .update({
-        name: student.name,
-        phone: student.phone
+        name: student.name
       })
       .eq('id', id)
       .select()
@@ -90,8 +85,7 @@ export const updateStudent = async (id: string, student: Partial<Student>): Prom
     // Transform from database schema to our app types
     const updatedStudent: Student = {
       id: data.id,
-      name: data.name,
-      phone: data.phone || undefined
+      name: data.name
     };
     
     return { data: updatedStudent, error: null };

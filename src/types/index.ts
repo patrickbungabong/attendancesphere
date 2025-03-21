@@ -9,10 +9,16 @@ export interface User {
   avatar?: string;
 }
 
+export interface Teacher {
+  id: string;
+  name: string;
+  email: string;
+  number?: string;
+}
+
 export interface Student {
   id: string;
   name: string;
-  phone?: string;
 }
 
 export type SessionStatus = 
@@ -36,13 +42,10 @@ export interface Session {
   studentName: string;
   status: SessionStatus;
   attendanceConfirmed: boolean;
-  teacherAttendanceConfirmed?: boolean;
   paymentStatus: 'pending' | 'paid' | 'partially-paid';
   paymentConfirmedByTeacher?: boolean;
-  notes?: string;
   cancelledBy?: 'teacher' | 'student' | 'admin';
   cancelReason?: string;
-  rescheduleDate?: string;
   makeupSessionId?: string;
 }
 
@@ -55,7 +58,6 @@ export interface Payment {
   amount: number;
   method: PaymentMethod;
   proofImageUrl?: string;
-  notes?: string;
   adminFee: number;
   teacherFee: number;
   confirmedByTeacher?: boolean;

@@ -8,49 +8,71 @@ import { Badge } from '@/components/ui/badge';
 import { Search, Filter, Plus, Mail, Phone, UserCheck, Clock, DollarSign } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/auth';
-import { User, UserRole } from '@/types';
-
-const initialTeachers: User[] = [];
+import { Teacher } from '@/types';
+import { getTeachers, createTeacher } from '@/lib/api/teachers';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from '@/hooks/use-toast';
 
 const Teachers: React.FC = () => {
   const { user } = useAuth();
-  const [teachers, setTeachers] = useState<User[]>(initialTeachers);
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
   const [isAddingTeacher, setIsAddingTeacher] = useState(false);
   
   // New teacher form state
   const [newTeacherName, setNewTeacherName] = useState('');
   const [newTeacherEmail, setNewTeacherEmail] = useState('');
-  const [newTeacherRole, setNewTeacherRole] = useState<UserRole>('teacher');
+  const [newTeacherNumber, setNewTeacherNumber] = useState('');
+  
+  // Fetch teachers data
+  const { data: teachersData, isLoading } = useQuery({
+    queryKey: ['teachers'],
+    queryFn: async () => {
+      const { data, error } = await getTeachers();
+      if (error) throw new Error(error);
+      return data || [];
+    }
+  });
+
+  // Create teacher mutation
+  const createTeacherMutation = useMutation({
+    mutationFn: createTeacher,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teachers'] });
+      setIsAddingTeacher(false);
+      setNewTeacherName('');
+      setNewTeacherEmail('');
+      setNewTeacherNumber('');
+      toast({
+        title: "Teacher Added",
+        description: "The teacher has been successfully added.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to add teacher: ${error}`,
+      });
+    }
+  });
+  
+  const teachers = teachersData || [];
   
   const filteredTeachers = teachers.filter(teacher => {
     const matchesSearch = teacher.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          teacher.email.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesRole = roleFilter === 'all' || teacher.role === roleFilter;
-    
-    return matchesSearch && matchesRole;
+    return matchesSearch;
   });
 
   const handleAddTeacher = () => {
     if (!newTeacherName || !newTeacherEmail) return;
     
-    const newTeacher: User = {
-      id: `t${teachers.length + 1}`,
+    createTeacherMutation.mutate({
       name: newTeacherName,
       email: newTeacherEmail,
-      role: newTeacherRole,
-      avatar: `https://i.pravatar.cc/150?img=${teachers.length + 10}` // Random avatar
-    };
-    
-    setTeachers([...teachers, newTeacher]);
-    
-    // Reset form
-    setNewTeacherName('');
-    setNewTeacherEmail('');
-    setNewTeacherRole('teacher');
-    setIsAddingTeacher(false);
+      number: newTeacherNumber || undefined
+    });
   };
 
   // Function to get initials from a name
@@ -104,23 +126,23 @@ const Teachers: React.FC = () => {
                 />
               </div>
               <div>
-                <label htmlFor="teacher-role" className="block text-sm font-medium mb-1">Role</label>
-                <Select 
-                  value={newTeacherRole} 
-                  onValueChange={(value: UserRole) => setNewTeacherRole(value)}
-                >
-                  <SelectTrigger id="teacher-role">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="teacher">Teacher</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="owner">Owner</SelectItem>
-                  </SelectContent>
-                </Select>
+                <label htmlFor="teacher-number" className="block text-sm font-medium mb-1">Phone Number</label>
+                <Input 
+                  id="teacher-number" 
+                  type="tel" 
+                  placeholder="+1234567890" 
+                  value={newTeacherNumber}
+                  onChange={(e) => setNewTeacherNumber(e.target.value)}
+                />
               </div>
               <div className="flex items-end">
-                <Button onClick={handleAddTeacher} className="w-full">Add Teacher</Button>
+                <Button 
+                  onClick={handleAddTeacher} 
+                  className="w-full"
+                  disabled={createTeacherMutation.isPending || !newTeacherName || !newTeacherEmail}
+                >
+                  {createTeacherMutation.isPending ? 'Adding...' : 'Add Teacher'}
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -137,24 +159,13 @@ const Teachers: React.FC = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        
-        <div className="flex items-center gap-2">
-          <Filter size={18} className="text-gray-500" />
-          <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Roles</SelectItem>
-              <SelectItem value="teacher">Teachers</SelectItem>
-              <SelectItem value="admin">Admins</SelectItem>
-              <SelectItem value="owner">Owners</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
       </div>
       
-      {filteredTeachers.length === 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center p-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      ) : filteredTeachers.length === 0 ? (
         <Card className="border border-dashed">
           <CardContent className="flex flex-col items-center justify-center text-center p-10">
             <div className="rounded-full bg-muted p-3 mb-3">
@@ -162,9 +173,7 @@ const Teachers: React.FC = () => {
             </div>
             <h3 className="text-lg font-medium">No teachers found</h3>
             <p className="text-muted-foreground mt-1 mb-4">
-              {searchQuery || roleFilter !== 'all' 
-                ? 'Try adjusting your search or filters' 
-                : 'Start by adding your first teacher'}
+              {searchQuery ? 'Try adjusting your search' : 'Start by adding your first teacher'}
             </p>
             {['admin', 'owner'].includes(user?.role || '') && !isAddingTeacher && (
               <Button onClick={() => setIsAddingTeacher(true)}>
@@ -181,20 +190,10 @@ const Teachers: React.FC = () => {
                 <div className="flex justify-between items-start">
                   <div className="flex items-center">
                     <Avatar className="h-14 w-14 mr-4">
-                      {teacher.avatar ? (
-                        <AvatarImage src={teacher.avatar} alt={teacher.name} />
-                      ) : (
-                        <AvatarFallback>{getInitials(teacher.name)}</AvatarFallback>
-                      )}
+                      <AvatarFallback>{getInitials(teacher.name)}</AvatarFallback>
                     </Avatar>
                     <div>
                       <CardTitle className="text-xl">{teacher.name}</CardTitle>
-                      <Badge variant={
-                        teacher.role === 'owner' ? 'default' : 
-                        teacher.role === 'admin' ? 'secondary' : 'outline'
-                      } className="mt-1">
-                        {teacher.role.charAt(0).toUpperCase() + teacher.role.slice(1)}
-                      </Badge>
                     </div>
                   </div>
                 </div>
@@ -205,6 +204,13 @@ const Teachers: React.FC = () => {
                     <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
                     <span>{teacher.email}</span>
                   </div>
+                  
+                  {teacher.number && (
+                    <div className="flex items-center text-sm">
+                      <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <span>{teacher.number}</span>
+                    </div>
+                  )}
                   
                   {/* Empty statistics placeholders */}
                   <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-muted">

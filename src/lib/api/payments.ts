@@ -19,7 +19,6 @@ export const getPayments = async (): Promise<{ data: Payment[] | null; error: an
       amount: payment.amount,
       method: payment.method as PaymentMethod,
       proofImageUrl: payment.proof_image_url || undefined,
-      notes: payment.notes || undefined,
       adminFee: payment.admin_fee,
       teacherFee: payment.teacher_fee,
       confirmedByTeacher: payment.confirmed_by_teacher
@@ -49,7 +48,6 @@ export const getPaymentsBySessionId = async (sessionId: string): Promise<{ data:
       amount: payment.amount,
       method: payment.method as PaymentMethod,
       proofImageUrl: payment.proof_image_url || undefined,
-      notes: payment.notes || undefined,
       adminFee: payment.admin_fee,
       teacherFee: payment.teacher_fee,
       confirmedByTeacher: payment.confirmed_by_teacher
@@ -71,7 +69,6 @@ export const createPayment = async (payment: Omit<Payment, 'id'>): Promise<{ dat
         amount: payment.amount,
         method: payment.method,
         proof_image_url: payment.proofImageUrl,
-        notes: payment.notes,
         admin_fee: payment.adminFee,
         teacher_fee: payment.teacherFee,
         confirmed_by_teacher: payment.confirmedByTeacher
@@ -89,7 +86,6 @@ export const createPayment = async (payment: Omit<Payment, 'id'>): Promise<{ dat
       amount: data.amount,
       method: data.method as PaymentMethod,
       proofImageUrl: data.proof_image_url || undefined,
-      notes: data.notes || undefined,
       adminFee: data.admin_fee,
       teacherFee: data.teacher_fee,
       confirmedByTeacher: data.confirmed_by_teacher
@@ -110,7 +106,6 @@ export const updatePayment = async (id: string, payment: Partial<Payment>): Prom
     if (payment.amount !== undefined) updateData.amount = payment.amount;
     if (payment.method !== undefined) updateData.method = payment.method;
     if (payment.proofImageUrl !== undefined) updateData.proof_image_url = payment.proofImageUrl;
-    if (payment.notes !== undefined) updateData.notes = payment.notes;
     if (payment.adminFee !== undefined) updateData.admin_fee = payment.adminFee;
     if (payment.teacherFee !== undefined) updateData.teacher_fee = payment.teacherFee;
     if (payment.confirmedByTeacher !== undefined) updateData.confirmed_by_teacher = payment.confirmedByTeacher;
@@ -132,7 +127,6 @@ export const updatePayment = async (id: string, payment: Partial<Payment>): Prom
       amount: data.amount,
       method: data.method as PaymentMethod,
       proofImageUrl: data.proof_image_url || undefined,
-      notes: data.notes || undefined,
       adminFee: data.admin_fee,
       teacherFee: data.teacher_fee,
       confirmedByTeacher: data.confirmed_by_teacher
