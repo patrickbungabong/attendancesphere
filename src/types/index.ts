@@ -1,4 +1,3 @@
-
 export type UserRole = 'teacher' | 'admin' | 'owner';
 
 export interface User {
@@ -19,6 +18,7 @@ export interface Teacher {
 export interface Student {
   id: string;
   name: string;
+  phone?: string; // Add missing property
 }
 
 export type SessionStatus = 
@@ -47,6 +47,7 @@ export interface Session {
   cancelledBy?: 'teacher' | 'student' | 'admin';
   cancelReason?: string;
   makeupSessionId?: string;
+  teacherAttendanceConfirmed?: boolean; // Add missing property
 }
 
 export type PaymentMethod = 'cash' | 'bank-transfer' | 'gcash';
