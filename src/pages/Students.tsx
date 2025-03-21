@@ -46,9 +46,6 @@ const studentFormSchema = z.object({
   name: z.string().min(2, {
     message: "Name must be at least 2 characters.",
   }),
-  phone: z.string().min(7, {
-    message: "Phone number must be at least 7 characters.",
-  }).optional(),
 });
 
 type StudentFormValues = z.infer<typeof studentFormSchema>;
@@ -68,14 +65,12 @@ const StudentsPage: React.FC = () => {
     resolver: zodResolver(studentFormSchema),
     defaultValues: {
       name: '',
-      phone: '',
     },
   });
   
   // Filter students based on search
   const filteredStudents = students.filter(student => 
-    student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (student.phone && student.phone.includes(searchQuery))
+    student.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
   const handleCreateStudent = (data: StudentFormValues) => {
@@ -92,7 +87,6 @@ const StudentsPage: React.FC = () => {
     setSelectedStudent(student);
     form.reset({
       name: student.name,
-      phone: student.phone || '',
     });
     setIsDialogOpen(true);
   };
@@ -120,7 +114,6 @@ const StudentsPage: React.FC = () => {
     setSelectedStudent(null);
     form.reset({
       name: '',
-      phone: '',
     });
     setIsDialogOpen(true);
   };
@@ -178,14 +171,13 @@ const StudentsPage: React.FC = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Phone</TableHead>
                   <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredStudents.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={3} className="h-24 text-center">
+                    <TableCell colSpan={2} className="h-24 text-center">
                       No students found.
                     </TableCell>
                   </TableRow>
@@ -193,7 +185,6 @@ const StudentsPage: React.FC = () => {
                   filteredStudents.map((student) => (
                     <TableRow key={student.id}>
                       <TableCell className="font-medium">{student.name}</TableCell>
-                      <TableCell>{student.phone || '—'}</TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -251,20 +242,6 @@ const StudentsPage: React.FC = () => {
                       <FormLabel>Name</FormLabel>
                       <FormControl>
                         <Input placeholder="John Doe" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="123-456-7890" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

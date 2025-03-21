@@ -1,3 +1,4 @@
+
 export type UserRole = 'teacher' | 'admin' | 'owner';
 
 export interface User {
@@ -18,7 +19,6 @@ export interface Teacher {
 export interface Student {
   id: string;
   name: string;
-  phone?: string; // Add missing property
 }
 
 export type SessionStatus = 
