@@ -80,10 +80,10 @@ export const SessionDetailsDialog: React.FC<SessionDetailsDialogProps> = ({
             </div>
           </div>
           
-          {session.notes && (
+          {session.cancelReason && (
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Notes</p>
-              <p className="text-base">{session.notes}</p>
+              <p className="text-sm font-medium text-muted-foreground">Cancel Reason</p>
+              <p className="text-base">{session.cancelReason}</p>
             </div>
           )}
         </div>
