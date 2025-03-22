@@ -88,6 +88,7 @@ export type Database = {
           start_time: string
           status: string
           student_id: string
+          teacher_attendance_confirmed: boolean | null
           teacher_id: string
         }
         Insert: {
@@ -103,6 +104,7 @@ export type Database = {
           start_time: string
           status?: string
           student_id: string
+          teacher_attendance_confirmed?: boolean | null
           teacher_id: string
         }
         Update: {
@@ -118,6 +120,7 @@ export type Database = {
           start_time?: string
           status?: string
           student_id?: string
+          teacher_attendance_confirmed?: boolean | null
           teacher_id?: string
         }
         Relationships: [
@@ -139,7 +142,7 @@ export type Database = {
             foreignKeyName: "sessions_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from '@/types';
 import { toast } from '@/hooks/use-toast';
@@ -22,24 +23,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    // Check if we have an active Supabase session
+    // Set up the subscription for auth state changes FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email);
+        
+        if (event === 'SIGNED_IN' && session) {
+          try {
+            const email = session.user.email;
+            if (email) {
+              const { data: userData, error } = await getUserByEmail(email);
+              if (userData && !error) {
+                console.log('User data fetched successfully:', userData.name);
+                setUser(userData);
+              } else {
+                console.error('Failed to fetch user data after sign in:', error);
+                toast({
+                  variant: 'destructive',
+                  title: 'Error',
+                  description: 'Failed to load user profile',
+                });
+              }
+            }
+          } catch (error) {
+            console.error('Error during auth state change handling:', error);
+          } finally {
+            setIsLoading(false);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
+          setUser(null);
+          setIsLoading(false);
+        }
+      }
+    );
+    
+    // THEN check the current session
     const checkSession = async () => {
-      setIsLoading(true);
-      
       try {
-        // Get current session
+        console.log('Checking current session...');
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
+          console.log('Found existing session for:', session.user.email);
           // We have a session, get the user profile
           const { data: userData, error } = await getUserByEmail(session.user.email);
           if (userData && !error) {
+            console.log('User profile loaded from session:', userData.name);
             setUser(userData);
           } else {
-            // Session exists but user not in database
-            console.error("User authenticated but not found in database:", error);
+            console.error("Session exists but user not found in database:", error);
             await supabase.auth.signOut();
           }
+        } else {
+          console.log('No active session found');
         }
       } catch (error) {
         console.error("Error checking session:", error);
@@ -54,23 +91,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     checkSession();
-    
-    // Set up the subscription for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
-          const email = session.user.email;
-          if (email) {
-            const { data: userData, error } = await getUserByEmail(email);
-            if (userData && !error) {
-              setUser(userData);
-            }
-          }
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-        }
-      }
-    );
     
     return () => {
       subscription.unsubscribe();
@@ -89,20 +109,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     setIsLoading(true);
     try {
+      console.log('Attempting login for:', email);
       // Authenticate with Supabase
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Authentication error:', authError);
+        throw authError;
+      }
       
       // Get user profile from database
       const { data: userData, error: userError } = await getUserByEmail(email);
       
-      if (userError) throw userError;
+      if (userError) {
+        console.error('User data fetch error:', userError);
+        throw userError;
+      }
       
       if (userData) {
+        console.log('Login successful for:', userData.name);
         setUser(userData);
         toast({
           title: 'Login Successful',
@@ -110,6 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         return { data, error: null };
       } else {
+        console.error('User not found in database after login');
         toast({
           variant: 'destructive',
           title: 'Login Failed',
@@ -120,12 +149,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: 'User not found' };
       }
     } catch (error: any) {
+      console.error('Login error:', error);
       toast({
         variant: 'destructive',
         title: 'Login Failed',
         description: error.message || 'An error occurred during login',
       });
-      console.error('Login error', error);
       return { error: error.message || 'Login failed' };
     } finally {
       setIsLoading(false);
