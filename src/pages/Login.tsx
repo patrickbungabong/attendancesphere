@@ -19,8 +19,12 @@ const Login: React.FC = () => {
     // Check if Supabase is properly configured
     setIsConfigured(isSupabaseConfigured());
     
-    // If already authenticated, redirect to dashboard
-    if (isAuthenticated) {
+    // Check for existing token in localStorage
+    const hasAccessToken = localStorage.getItem('sb-lkurvspcsokuffxdtarv-auth-token') !== null;
+    
+    // If already authenticated or has token, redirect to dashboard
+    if (isAuthenticated || hasAccessToken) {
+      console.log('User already authenticated or has token, redirecting to dashboard');
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);

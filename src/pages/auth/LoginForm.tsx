@@ -20,9 +20,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ isConfigured }) => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
-  // Redirect if already authenticated
+  // Redirect if already authenticated or has token
   useEffect(() => {
-    if (isAuthenticated) {
+    const hasAccessToken = localStorage.getItem('sb-lkurvspcsokuffxdtarv-auth-token') !== null;
+    
+    if (isAuthenticated || hasAccessToken) {
+      console.log('User already authenticated or has token in LoginForm, redirecting to dashboard');
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
