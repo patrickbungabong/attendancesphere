@@ -50,22 +50,29 @@ const Sidebar: React.FC = () => {
   const isOwner = user?.role === 'owner';
   
   const teacherLinks = [
+    { icon: <BarChart size={20} />, label: 'Dashboard', href: '/dashboard' },
+    { icon: <Calendar size={20} />, label: 'Schedule', href: '/schedule' },
     { icon: <Clock size={20} />, label: 'Sessions', href: '/sessions' },
     { icon: <Calendar size={20} />, label: 'My Schedule', href: '/schedule' },
     { icon: <DollarSign size={20} />, label: 'My Earnings', href: '/earnings' },
   ];
   
   const adminLinks = [
-    { icon: <Clock size={20} />, label: 'Sessions', href: '/sessions' },
+    { icon: <BarChart size={20} />, label: 'Dashboard', href: '/dashboard' },
     { icon: <Calendar size={20} />, label: 'Schedule', href: '/schedule' },
-    { icon: <GraduationCap size={20} />, label: 'Students', href: '/students' },
-    { icon: <Users size={20} />, label: 'Teachers', href: '/teachers' },
+    { icon: <Clock size={20} />, label: 'Sessions', href: '/sessions' },
     { icon: <DollarSign size={20} />, label: 'Payments', href: '/payments' },
+    { icon: <Users size={20} />, label: 'Teachers', href: '/teachers' },
+    { icon: <GraduationCap size={20} />, label: 'Students', href: '/students' },
   ];
   
   const ownerLinks = [
     { icon: <BarChart size={20} />, label: 'Dashboard', href: '/dashboard' },
+    { icon: <Calendar size={20} />, label: 'Schedule', href: '/schedule' },
+    { icon: <Clock size={20} />, label: 'Sessions', href: '/sessions' },
+    { icon: <DollarSign size={20} />, label: 'Payments', href: '/payments' },
     { icon: <Users size={20} />, label: 'Teachers', href: '/teachers' },
+    { icon: <GraduationCap size={20} />, label: 'Students', href: '/students' },
     { icon: <DollarSign size={20} />, label: 'Finance', href: '/finance' },
     { icon: <FileText size={20} />, label: 'Reports', href: '/reports' },
     { icon: <Settings size={20} />, label: 'Settings', href: '/settings' },
